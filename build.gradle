@@ -1,0 +1,38 @@
+group 'com.novarto'
+version '0.9-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    mavenLocal()
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        mavenLocal()
+    }
+    dependencies {
+        classpath group: 'com.novarto', name: 'java-conventions',
+                version: '0.9-SNAPSHOT'
+    }
+}
+
+subprojects {
+
+    apply plugin: 'com.novarto.javaconventions'
+
+    group project.rootProject.group
+    version project.rootProject.version
+
+    javaconventions {
+        ci = System.getProperty("ci")!=null
+    }
+
+    repositories {
+        mavenLocal()
+    }
+
+}
+
