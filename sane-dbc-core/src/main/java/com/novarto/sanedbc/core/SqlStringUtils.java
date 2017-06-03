@@ -6,9 +6,6 @@ import java.util.Iterator;
 
 import static com.novarto.sanedbc.core.SqlStringUtils.StatementKind.*;
 
-/**
- * Created by fmap on 06.07.16.
- */
 public class SqlStringUtils
 {
     public static String placeholders(int length)

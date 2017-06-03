@@ -6,9 +6,6 @@ import fj.function.TryEffect1;
 
 import java.sql.*;
 
-/**
- * Created by fmap on 28.06.16.
- */
 public abstract class InsertGenKeysOp<A extends Number> extends DB<A>
 
 {

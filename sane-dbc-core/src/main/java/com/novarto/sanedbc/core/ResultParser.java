@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-/**
- * Created by fmap on 18.08.16.
- */
 public class ResultParser
 {
     public static List<LinkedHashMap<String, Object>> parseResultSet(ResultSet s)

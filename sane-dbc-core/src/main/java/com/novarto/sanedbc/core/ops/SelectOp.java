@@ -8,9 +8,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * Created by fmap on 28.06.16.
- */
 public class SelectOp<A, C1 extends Iterable<A>, C2 extends Iterable<A>> extends AbstractSelectOp<C2>
 {
 

@@ -11,9 +11,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * Created by fmap on 08.07.16.
- */
 public class Binders
 {
 

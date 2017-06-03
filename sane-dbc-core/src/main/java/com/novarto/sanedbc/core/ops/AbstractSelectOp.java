@@ -10,9 +10,6 @@ import java.sql.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Created by fmap on 28.11.16.
- */
 public abstract class AbstractSelectOp<A> extends DB<A>
 {
     protected static final Logger LOGGER = LoggerFactory.getLogger(SelectOp.class);

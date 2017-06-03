@@ -10,9 +10,6 @@ import java.util.Iterator;
 
 import static com.novarto.sanedbc.core.ops.Binders.NO_BINDER;
 
-/**
- * Created by fmap on 28.06.16.
- */
 public class AggregateOp extends DB<Long>
 {
 

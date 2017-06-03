@@ -6,9 +6,6 @@ import static fj.data.List.list;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-/**
- * Created by fmap on 05.01.17.
- */
 public class SqlStringUtilsTest
 {
     @Test

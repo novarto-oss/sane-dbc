@@ -13,9 +13,6 @@ import java.sql.SQLException;
 
 import static com.novarto.sanedbc.core.ops.Binders.batchBinder;
 
-/**
- * Created by fmap on 28.06.16.
- */
 public class BatchUpdateOp<A> extends DB<Option<Integer>>
 {
     private final String sql;

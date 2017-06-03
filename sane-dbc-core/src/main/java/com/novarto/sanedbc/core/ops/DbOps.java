@@ -18,9 +18,6 @@ import java.util.List;
 import static fj.data.Option.none;
 import static fj.data.Option.some;
 
-/**
- * Created by fmap on 04.07.16.
- */
 public final class DbOps
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbOps.class);

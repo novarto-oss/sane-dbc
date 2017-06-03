@@ -25,9 +25,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-/**
- * Created by fmap on 28.06.16.
- */
 public class JdbcUtilsTest
 {
 

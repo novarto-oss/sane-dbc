@@ -7,9 +7,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * Created by fmap on 28.11.16.
- */
 public class FoldLeftSelectOp<A> extends AbstractSelectOp<A>
 {
 

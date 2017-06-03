@@ -16,9 +16,6 @@ import java.util.List;
 
 import static com.novarto.sanedbc.core.ops.Binders.optimizedBatchBinder;
 
-/**
- * Created by fmap on 21.07.16.
- */
 public class BatchDeleteOptimized<A> extends DB<Integer>
 {
 

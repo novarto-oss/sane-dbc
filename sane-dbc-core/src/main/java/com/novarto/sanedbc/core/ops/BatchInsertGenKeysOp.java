@@ -12,9 +12,6 @@ import java.sql.*;
 
 import static com.novarto.sanedbc.core.ops.Binders.batchBinder;
 
-/**
- * Created by fmap on 28.06.16.
- */
 public abstract class BatchInsertGenKeysOp<A, B extends Number, C1 extends Iterable<B>, C2 extends Iterable<B>> extends DB<C2>
 
 {
