@@ -5,14 +5,27 @@ import fj.function.Effect2;
 import java.util.Iterator;
 
 import static com.novarto.sanedbc.core.SqlStringUtils.StatementKind.*;
+import static java.text.MessageFormat.format;
 
+/**
+ * A set of utility methods to aid you in building SQL queries.
+ */
 public class SqlStringUtils
 {
+    /**
+     * Generates a number of PreparedStatement placeholders. For example, placeholders(3) will generate "?,?,?"
+     * @param length
+     * @throws IllegalArgumentException if length<1
+     * @return
+     */
     public static String placeholders(int length)
     {
         return placeholdersBuilder(length, new StringBuilder()).toString();
     }
 
+    /**
+     * A placeholders() version which returns a StringBuilder
+     */
     public static StringBuilder placeholdersBuilder(int length, StringBuilder sb)
     {
         if (length < 1)
@@ -28,10 +41,17 @@ public class SqlStringUtils
         return sb.delete(sb.length() - 2, sb.length());
     }
 
-    public static String placeholderRows(int length, int numColumns)
+    /**
+     * Generates rows of PreparedStatement placeholders. For example, placeholderRows(4,2) will return
+     * (?,?),(?,?),(?,?),(?,?)
+     * @param numRows the number of rows to generate
+     * @param numColumns the number of columns in each row
+     * @return the generated placeholders
+     */
+    public static String placeholderRows(int numRows, int numColumns)
     {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++)
+        for (int i = 0; i < numRows; i++)
         {
             sb.append("(");
             sb = placeholdersBuilder(numColumns, sb);
@@ -41,23 +61,55 @@ public class SqlStringUtils
         return sb.toString();
     }
 
+    /**
+     * Surrounds a string with single quotes. This method makes no attempt to prevent SQL injection.
+     * It is the caller's responsibility to ensure the parameter is sanitized.
+     * @param str
+     * @return the quoted string
+     */
     public static String literal(String str)
     {
         return "'" + str + "'";
 
     }
 
+    /**
+     * Given a iterable of column names, generates a set expression with placeholders, i.e. one to be used in
+     * UPDATE ... SET ... . For example, setExpressionWithPlaceholders(asList("FOO", "BAR")) will yield
+     * "FOO=?,BAR=?".
+     * This method makes no attempt to escape `colNames`. They should either be passed statically as java literals,
+     * or sanitized.
+     */
     public static StringBuilder setExpressionWithPlaceholders(Iterable<String> colNames)
     {
         return expressionWithPlaceholders(colNames, ", ");
     }
 
-    public static StringBuilder whereExpressionWithPlaceholders(Iterable<String> colNames)
+    /**
+     * Given a logical operator (and / or), and an iterable of column names, generates a WHERE expression with placeholders,
+     * i.e. one to be used in a WHERE clause. For example, whereExpressionWithPlaceholders(asList("A", "B"), OR)
+     * will yield "A=? OR B=?"
+     * This method makes no attempt to escape `colNames`. They should either be passed statically as java literals,
+     * or sanitized.
+     *
+     */
+    public static StringBuilder whereExpressionWithPlaceholders(Iterable<String> colNames, LogicalOperator op)
     {
-        return expressionWithPlaceholders(colNames, " AND ");
+        return expressionWithPlaceholders(colNames,
+                format(" {0} ", op.name())
+        );
     }
 
-    public static StringBuilder expressionWithPlaceholders(Iterable<String> colNames, String separator)
+    /**
+     * Shorthand for whereExpressionWithPlaceholders(colNames, AND)
+     */
+    public static StringBuilder whereExpressionWithPlaceholders(Iterable<String> colNames)
+    {
+        return whereExpressionWithPlaceholders(colNames, LogicalOperator.AND);
+    }
+
+
+    private static StringBuilder expressionWithPlaceholders(Iterable<String> colNames, String separator)
     {
         StringBuilder result = new StringBuilder();
 
@@ -100,26 +152,34 @@ public class SqlStringUtils
         return expression;
     }
 
+    /**
+     * Tries to detect the type of an sql statement as one of the enums in StatementKind.
+     * This method does no lexing or parsing, and almost no normalization, trying to strike a balance
+     * between efficiency and utility. It is not intended to be used in application code. Its result should
+     * only be interpreted as a hint.
+     * @param sql
+     * @return a value hinting the statement kind
+     */
     public static StatementKind getStatementKind(String sql)
     {
 
-        sql = sql.trim();
-        sql = sql.length() < 10 ? sql : sql.substring(0, 10);
-        sql = sql.toLowerCase();
+        String prefix = sql.trim();
+        prefix = prefix.length() < 10 ? prefix : prefix.substring(0, 10);
+        prefix = prefix.toLowerCase();
 
-        if (sql.startsWith("select"))
+        if (prefix.startsWith("select"))
         {
             return SELECT;
         }
-        else if (sql.startsWith("insert"))
+        else if (prefix.startsWith("insert"))
         {
             return INSERT;
         }
-        else if (sql.startsWith("update"))
+        else if (prefix.startsWith("update"))
         {
             return UPDATE;
         }
-        else if (sql.startsWith("delete"))
+        else if (prefix.startsWith("delete"))
         {
             return DELETE;
         }
@@ -132,7 +192,7 @@ public class SqlStringUtils
 
     public enum StatementKind
     {
-        SELECT, UPDATE, DELETE, INSERT, UNKNOWN;
+        SELECT, UPDATE, DELETE, INSERT, UNKNOWN
     }
 
     public enum LogicalOperator
