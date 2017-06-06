@@ -22,6 +22,7 @@ import static fj.P.p;
 import static fj.data.List.list;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -232,6 +233,22 @@ public class JdbcUtilsTest
 
         Integer result = db.run(null);
         assertThat(result, is(0));
+    }
+
+    @Test
+    public void insertGenKeys()
+    {
+        Integer id = DB.transact(new InsertGenKeysOp.Int(
+                "INSERT INTO MySqlTest_IDS(DUMMY) VALUES (?)",
+                ps -> ps.setString(1, "a")));
+
+        assertThat(id, is(notNullValue()));
+
+        String str = DB.submit(DbOps
+                .unique(new SelectOp.List<>("SELECT DUMMY FROM MySqlTest_IDS WHERE ID=?", ps -> ps.setInt(1, id),
+                        rs -> rs.getString(1)))).some();
+
+        assertThat(str, is("a"));
     }
 
     private void swallowChecked(TryEffect0<?> f)
