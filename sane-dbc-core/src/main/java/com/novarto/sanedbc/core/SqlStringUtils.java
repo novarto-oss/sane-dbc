@@ -2,8 +2,6 @@ package com.novarto.sanedbc.core;
 
 import fj.function.Effect2;
 
-import java.util.Iterator;
-
 import static com.novarto.sanedbc.core.SqlStringUtils.StatementKind.*;
 import static java.text.MessageFormat.format;
 
@@ -120,37 +118,6 @@ public class SqlStringUtils
         return result.delete(result.length() - separator.length(), result.length());
     }
 
-    public static StringBuilder whereExpressionWithNullValues(Iterable<String> columns, Iterable<String> values,
-            LogicalOperator logicalOperator)
-    {
-
-        final Iterator<String> columnsIterator = columns.iterator();
-        final Iterator<String> valuesIterator = values.iterator();
-        StringBuilder expression = new StringBuilder();
-        while (columnsIterator.hasNext() && valuesIterator.hasNext())
-        {
-
-            final String column = columnsIterator.next();
-            final String value = valuesIterator.next();
-            expression.append(column);
-
-            if (value == null)
-            {
-                expression.append(" IS ? ");
-            }
-            else
-            {
-                expression.append(" = ? ");
-            }
-
-            expression.append(logicalOperator.name()).append(" ");
-
-        }
-
-        expression.delete((expression.length() - logicalOperator.name().length() - 1), expression.length());
-
-        return expression;
-    }
 
     /**
      * Tries to detect the type of an sql statement as one of the enums in StatementKind.

@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 
 import static com.novarto.sanedbc.core.ops.Binders.NO_BINDER;
 import static fj.P.p;
+import static fj.data.List.arrayList;
 import static fj.data.List.list;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
@@ -249,6 +250,24 @@ public class JdbcUtilsTest
                         rs -> rs.getString(1)))).some();
 
         assertThat(str, is("a"));
+    }
+
+    @Test
+    public void submitIsNotTransactional()
+    {
+        DB<Unit> fail = insertKeysOp(arrayList("a", "b", "c")).bind(ignore -> new DB<Unit>()
+        {
+            @Override public Unit run(Connection c) throws SQLException
+            {
+                throw new SQLException("failed i have");
+            }
+        });
+
+        swallow(() -> DB.submit(fail));
+
+        assertThat(DB.submit(SELECT_ALL_IDS_OP), is(arrayList("a", "b", "c")));
+        assertThat(DB.transact(SELECT_ALL_IDS_OP), is(arrayList("a", "b", "c")));
+
     }
 
     private void swallowChecked(TryEffect0<?> f)
