@@ -4,34 +4,40 @@ version '0.9-SNAPSHOT'
 repositories {
     mavenCentral()
     jcenter()
-    mavenLocal()
 }
 
 buildscript {
     repositories {
         mavenCentral()
         jcenter()
-        mavenLocal()
+        maven {
+            url 'https://oss.jfrog.org/artifactory/libs-snapshot/'
+        }
     }
     dependencies {
         classpath group: 'com.novarto', name: 'java-conventions',
-                version: '0.9-SNAPSHOT'
+                version: '0.9.1-SNAPSHOT'
     }
 }
 
 subprojects {
 
-    apply plugin: 'com.novarto.javaconventions'
+    repositories {
+        maven {
+            url 'https://oss.jfrog.org/artifactory/libs-snapshot/'
+        }
+    }
 
     group project.rootProject.group
     version project.rootProject.version
 
+    apply plugin: 'com.novarto.javaconventions'
+    apply plugin: 'com.novarto.osspublish'
+
+
+
     javaconventions {
         ci = System.getProperty("ci")!=null
-    }
-
-    repositories {
-        mavenLocal()
     }
 
     dependencies {
