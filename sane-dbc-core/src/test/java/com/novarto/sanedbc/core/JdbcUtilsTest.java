@@ -1,11 +1,13 @@
 package com.novarto.sanedbc.core;
 
+import com.novarto.lang.CanBuildFrom;
 import com.novarto.sanedbc.core.interpreter.SyncDbInterpreter;
 import com.novarto.sanedbc.core.ops.*;
 import fj.P2;
 import fj.Unit;
 import fj.control.db.DB;
 import fj.data.List;
+import fj.data.Option;
 import fj.function.TryEffect0;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -21,6 +23,9 @@ import static com.novarto.sanedbc.core.ops.Binders.NO_BINDER;
 import static fj.P.p;
 import static fj.data.List.arrayList;
 import static fj.data.List.list;
+import static fj.data.Option.none;
+import static fj.data.Option.some;
+import static java.text.MessageFormat.format;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -47,6 +52,8 @@ public class JdbcUtilsTest
 
                     st.execute("CREATE TABLE MySqlTest_EXPIRING_STUFF (ID INTEGER PRIMARY KEY IDENTITY," +
                             " DESCRIPTION VARCHAR(100), STAMP BIGINT)");
+                    st.execute("CREATE TABLE MySqlTest_FOO (X VARCHAR (100), Y VARCHAR(100))");
+
 
                     return Unit.unit();
                 }
@@ -81,6 +88,12 @@ public class JdbcUtilsTest
                 (preparedStatement) -> preparedStatement.setString(1, desc), resultSet -> resultSet.getString(2));
     }
 
+    private static DB<Option<String>> selectByUniqueDescOp(String desc)
+    {
+        return DbOps.unique(new SelectOp.FjList<>("SELECT * FROM MySqlTest_DATA WHERE DESCRIPTION=?",
+                (preparedStatement) -> preparedStatement.setString(1, desc), resultSet -> resultSet.getString(2)));
+    }
+
     private static final AggregateOp COUNT_IDS = new AggregateOp("SELECT COUNT(*) FROM MySqlTest_IDS");
     private static final AggregateOp COUNT_DATA = new AggregateOp("SELECT COUNT(*) FROM MySqlTest_DATA");
 
@@ -100,6 +113,8 @@ public class JdbcUtilsTest
                     st.execute("DELETE FROM MySqlTest_IDS");
                     st.execute("DELETE FROM MySqlTest_DATA");
                     st.execute("DELETE FROM MySqlTest_EXPIRING_STUFF");
+                    st.execute("DELETE FROM MySqlTest_FOO");
+
 
                     return Unit.unit();
                 }
@@ -268,6 +283,46 @@ public class JdbcUtilsTest
         assertThat(DB.submit(SELECT_ALL_IDS_OP), is(arrayList("a", "b", "c")));
         assertThat(DB.transact(SELECT_ALL_IDS_OP), is(arrayList("a", "b", "c")));
 
+    }
+
+    @Test
+    public void iterableBinder()
+    {
+        List<P2<String, String>> data = arrayList(p("x1", "y1"), p("x2", "y2"), p("x3", "y3"));
+        String sql = format(
+                "INSERT INTO MySqlTest_FOO(X,Y) VALUES ({0})",
+                SqlStringUtils.placeholderRows(data.length(), 2)
+        );
+
+        UpdateOp insert = new UpdateOp(
+                sql,
+                Binders.iterableBinder((pos, ps, x) -> {
+                    int currentPosition = pos;
+                    ps.setString(currentPosition++, x._1());
+                    ps.setString(currentPosition++, x._2());
+                    return currentPosition;
+
+                }, data)
+        );
+
+        int updateCount = DB.transact(insert);
+        assertThat(updateCount, is(3));
+
+        List<P2<String, String>> readData = DB.submit(new SelectOp.FjList<>("SELECT X,Y FROM MySqlTest_FOO", NO_BINDER,
+                rs -> p(rs.getString(1), rs.getString(2))));
+
+        assertThat(readData, is(data));
+    }
+
+    @Test public void dbSequence()
+    {
+        DB.transact(insertDataOp(arrayList(p(1, "foo"), p(2, "bar"), p(3, "zzz"))));
+
+        List<DB<Option<String>>> dbs = arrayList(selectByUniqueDescOp("foo"), selectByUniqueDescOp("zzz"),
+                selectByUniqueDescOp("no_such"));
+
+        List<Option<String>> result = DB.submit(DbOps.sequence(dbs, CanBuildFrom.fjListCanBuildFrom()));
+        assertThat(result, is(arrayList(some("foo"), some("zzz"), none())));
     }
 
     private void swallowChecked(TryEffect0<?> f)

@@ -171,6 +171,16 @@ public final class DbOps
         return result;
     }
 
+    /**
+     * Given an iterable of DB's, convert it to a single DB of iterable. E.g. List[DB[A]] => DB[List[A]].
+     * Utilizes a CanBuildFrom instance to construct the result iterable
+     * @param xs the iterable of DB's to convert
+     * @param cbf the CanBuildFrom instance
+     * @param <A> the type of elements
+     * @param <C1> optional intermediate representation, see CanBuildFrom javadoc
+     * @param <C2> the type of the result iterable, see CanBuildFrom javadoc
+     * @return A DB[C2[A]]
+     */
     public static <A, C1 extends Iterable<A>, C2 extends Iterable<A>> DB<C2> sequence(Iterable<DB<A>> xs,
             CanBuildFrom<A, C1, C2> cbf)
     {

@@ -1,12 +1,12 @@
 package com.novarto.sanedbc.core.ops.optimized;
 
-import com.novarto.sanedbc.core.SqlStringUtils;
-import com.novarto.sanedbc.core.ops.DbOps;
 import com.novarto.lang.Collections;
 import com.novarto.lang.StringUtil;
+import com.novarto.sanedbc.core.SqlStringUtils;
+import com.novarto.sanedbc.core.ops.DbOps;
 import fj.control.db.DB;
-import fj.function.Try1;
 import fj.function.Try3;
+import fj.function.TryEffect1;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.List;
 
-import static com.novarto.sanedbc.core.ops.Binders.optimizedBatchBinder;
+import static com.novarto.sanedbc.core.ops.Binders.iterableBinder;
 
 public class BatchDeleteOptimized<A> extends DB<Integer>
 {
@@ -35,7 +35,7 @@ public class BatchDeleteOptimized<A> extends DB<Integer>
             String sql = MessageFormat.format(SQL_TEMPLATE, tableName, colsSegment,
                     SqlStringUtils.placeholderRows(Collections.size(xs), whereColumnsLength));
 
-            Try1<PreparedStatement, Integer, SQLException> populatedBinder = optimizedBatchBinder(binder, xs);
+            TryEffect1<PreparedStatement, SQLException> populatedBinder = iterableBinder(binder, xs);
 
             return new DB<Integer>()
             {
