@@ -8,8 +8,18 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static com.novarto.sanedbc.core.ops.DbOps.rollback;
+import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.transactional;
 
+/**
+ * A {@link DB} interpreter that utilizes a data source to spawn connections,
+ * and submits {@link DB} instances for execution in a Guava ListeningExecutorService.
+ * The ListenableFuture returned will fail iff the underlying DB throws.
+ *
+ * Spawning of a connection happens inside an executor service thread, the submitted operation is executed in the same thread,
+ * and then the connection is closed. Therefore, a connection obtained from the pool is accessed by only a single thread
+ * before being returned to the pool.
+ *
+ */
 public class AsyncDbInterpreter
 {
 
@@ -23,8 +33,24 @@ public class AsyncDbInterpreter
         this.executor = ex;
     }
 
+    /**
+     * Submits this operation for execution in the executor service. The operation is executed with connection autoCommit = true,
+     * i.e. non-transactionally.
+     */
+    public <A> ListenableFuture<A> submit(DB<A> op)
+    {
+        return withConnection(op, true);
+    }
 
-    public <A> ListenableFuture<A> withConnection(DB<A> op, boolean autoCommit)
+    /**
+     * Submits this operation for execution in the executor service. The operation is executed as a transaction.
+     */
+    public <A> ListenableFuture<A> transact(DB<A> op)
+    {
+        return withConnection(transactional(op), false);
+    }
+
+    private <A> ListenableFuture<A> withConnection(DB<A> op, boolean autoCommit)
     {
         return executor.submit(() ->
         {
@@ -36,30 +62,14 @@ public class AsyncDbInterpreter
         });
     }
 
-    public <A> ListenableFuture<A> withConnection(DB<A> op)
+    private Connection getConnection(boolean autoCommit) throws SQLException
     {
-        return withConnection(op, true);
+        Connection result = ds.getConnection();
+        result.setAutoCommit(autoCommit);
+        return result;
     }
 
-    public <A> ListenableFuture<A> withTransaction(DB<A> op)
-    {
 
-        return withConnection(rollback(op), false);
-    }
-
-    /**
-     * Public to be reused by other DB interpreters, use with caution.
-     *
-     * @param autoCommit
-     * @return
-     * @throws SQLException
-     */
-    public Connection getConnection(boolean autoCommit) throws SQLException
-    {
-        final Connection connection = ds.getConnection();
-        connection.setAutoCommit(autoCommit);
-        return connection;
-    }
 
 
 }

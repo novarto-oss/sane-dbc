@@ -10,9 +10,13 @@ import java.sql.SQLException;
 
 /**
  * An abstract SQL 'SELECT' operation which is parametric over its return type. Users will generally use subclasses of
- * this class.
+ * this class. Library developers may wish to subclass or compose this class to implement new operation types taking
+ * a read-only query as input.
  *
- * Examples of the return type: a collection of objects; a map; a single object aggregating the result set.
+ * Concrete examples of the return type are
+ * - an iterable of things ({@link SelectOp});
+ * - a single object aggregating the result set, such as a Map for group by, long for aggregate numeric operations, etc
+ *  ({@link FoldLeftSelectOp}).
  *
  * @param <A> the return type of the operation.
  */

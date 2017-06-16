@@ -6,8 +6,6 @@ import fj.Try;
 import fj.control.db.DB;
 import fj.data.Option;
 import fj.data.Validation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -18,68 +16,25 @@ import java.util.List;
 import static fj.data.Option.none;
 import static fj.data.Option.some;
 
+/**
+ * A set of conversions between DB[A] instances.
+ */
 public final class DbOps
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DbOps.class);
 
     private DbOps()
     {
         throw new UnsupportedOperationException();
     }
 
-    public static <A> DB<A> rollback(DB<A> op)
-    {
-
-        return new DB<A>()
-        {
-            @Override public A run(Connection c) throws SQLException
-            {
-                boolean wasAutocommit = c.getAutoCommit();
-                if (wasAutocommit)
-                {
-                    c.setAutoCommit(false);
-                }
-                try
-                {
-                    A result = op.run(c);
-                    c.commit();
-                    return result;
-                }
-                catch (RuntimeException | SQLException e)
-                {
-                    c.rollback();
-                    throw e;
-
-                }
-                catch (Error e)
-                {
-                    try
-                    {
-                        c.rollback();
-                    }
-                    catch (SQLException sqlE)
-                    {
-                        LOGGER.error("Could not roll back transaction which failed with java.lang.Error", sqlE);
-                    }
-                    throw e;
-                }
-                catch (Throwable t)
-                {
-                    c.rollback();
-                    throw t;
-                }
-                finally
-                {
-                    if (wasAutocommit)
-                    {
-                        c.setAutoCommit(true);
-                    }
-                }
-
-            }
-        };
-    }
-
+    /**
+     * Given an existing {@link SelectOp}, converts it to an operation that either returns one result, none at all,
+     * or throws if there is more than one result in the result set.
+     *
+     * This is useful if you are issuing a query by a single primary key. Such a query is never expected to return > 1 results
+     * (in which case the returned DB will throw upon interpretation), but can return no results (which is expressed in the
+     * return type)
+     */
     public static <A> DB<Option<A>> unique(SelectOp<A, ?, ?> op)
     {
         return op.map(xs ->
@@ -100,17 +55,29 @@ public final class DbOps
         });
     }
 
-    public static <A, Err> DB<Validation<Err, A>> pure(DB<A> db, F<Exception, Err> errTransform)
+    /**
+     * Given an existing {@link DB}, converts it to a DB which never throws, provided the encountered error is a subtype of
+     * {@link Exception}. Instead, the failure is converted to the desired failure type by calling errTransform, and returned
+     * inside a failed {@link Validation} instance.
+     *
+     * @param db the operation to convert
+     * @param errTransform a function that takes an exception and returns an <Err>
+     * @param <Err> the desired error type
+     * @return a new {@link DB} which upon interpretation returns a validation instance instead of throwing,
+     * iff the error is a subtype of {@link Exception}
+     */
+    public static <A, Err> DB<Validation<Err, A>> toValidation(DB<A> db, F<Exception, Err> errTransform)
     {
 
         return new DB<Validation<Err, A>>()
         {
             @Override public Validation<Err, A> run(Connection c) throws SQLException
             {
-                return Validation.validation(Try.f(() -> db.run(c)).f().toEither().left().map(e -> errTransform.f(e)));
+                return Validation.validation(Try.f(() -> db.run(c)).f().toEither().left().map(errTransform::f));
             }
         };
     }
+
 
     public static <A> DB<Integer> toChunks(Iterable<A> xs, F<Iterable<A>, DB<Integer>> getOp, int chunkSize)
     {
@@ -191,7 +158,7 @@ public final class DbOps
             acc = db.bind(x -> fAcc.map(ys -> cbf.add(x, ys)));
         }
 
-        return acc.map(zs -> cbf.build(zs));
+        return acc.map(cbf::build);
     }
 
 }

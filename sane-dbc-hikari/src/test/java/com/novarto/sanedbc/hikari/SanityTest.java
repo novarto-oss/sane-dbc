@@ -36,10 +36,10 @@ public class SanityTest
 
     @Test public void sanity()
     {
-        ListenableFuture<Integer> success = dbAsync.withConnection(DB.unit(42));
+        ListenableFuture<Integer> success = dbAsync.submit(DB.unit(42));
 
         SQLException ex = new SQLException("failed i have");
-        ListenableFuture<Integer> fail = dbAsync.withConnection(DB.db((Try1<Connection, Integer, SQLException>) c ->
+        ListenableFuture<Integer> fail = dbAsync.submit(DB.db((Try1<Connection, Integer, SQLException>) c ->
         {
             assertThat(c, is(notNullValue()));
             throw ex;
