@@ -50,3 +50,64 @@ Release versions will be published once there is interest in the library.
 
 # Tutorial
 
+## Concepts
+
+Let's start with a small example. We need a table to work with:
+```hsqldb
+CREATE TABLE FOO (ID INTEGER IDENTITY PRIMARY KEY, DESCRIPTION NVARCHAR(100))
+```
+Let's look at some plain old pieces of code which read or mutate it:
+
+```java
+    void insertSomeFoos(Connection c) throws SQLException
+    {
+        try(PreparedStatement insert = c.prepareStatement(
+                "INSERT INTO FOO(DESCRIPTION) VALUES (?)"
+        ))
+        {
+            for(String descr: asList("one", "two", "three"))
+            {
+                insert.setString(1, descr);
+                insert.executeUpdate();
+            }
+
+        }
+    }
+```
+
+```java
+    List<Foo> selectTheFoos(Connection c) throws SQLException
+    {
+        try(PreparedStatement s = c.prepareStatement("SELECT ID, DESCRIPTION FROM FOO"))
+        {
+            List<Foo> result = new ArrayList<>();
+            ResultSet rs = s.executeQuery();
+            while(rs.next())
+            {
+                result.add(new Foo(rs.getInt(1), rs.getString(2)));
+            }
+
+            return result;
+
+        }
+    }
+```
+
+An RDBMS interaction in Java, then, takes the form
+```java
+A run(Connection c) throws SQLException;
+```
+, where `A` is a type parameter.
+This is exactly the `run` method of the [DB class](https://github.com/functionaljava/functionaljava/blob/master/core/src/main/java/fj/control/db/DB.java).
+We'll be using that from now on.
+
+For operations returning nothing (DB mutations, where we are only interested in changing the tables state), in Java it is
+customary to use `void`, as above. However, we want to parametrize on the return type, and `java.lang.Void` is strange in that its
+only 'valid' value is `null`, which can lead to NPE. We will instead use another type with only one value which is null-safe -
+[Unit](https://github.com/functionaljava/functionaljava/blob/master/core/src/main/java/fj/Unit.java). You obtain a Unit value
+to return by calling `Unit.unit()`.
+
+
+ 
+
+
