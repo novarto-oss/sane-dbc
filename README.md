@@ -52,6 +52,8 @@ Release versions will be published once there is interest in the library.
 
 ## Concepts
 
+### The essence of a JDBC interaction
+
 Let's start with a small example. We need a table to work with:
 ```hsqldb
 CREATE TABLE FOO (ID INTEGER IDENTITY PRIMARY KEY, DESCRIPTION NVARCHAR(100))
