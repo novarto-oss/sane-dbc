@@ -108,7 +108,9 @@ only 'valid' value is `null`, which can lead to NPE. We will instead use another
 to return by calling `Unit.unit()`.*
 
 ### Description
-A `DB` instance is just a **description** of a database interaction. If we just construct a `DB`, nothing will happen - there will
+>A `DB` instance is just a **description** of a database interaction.
+
+If we just construct a `DB`, nothing will happen - there will
 be no connections, calling the database, or any other *side effects*. In other words, a method returning a `DB` is
 **[referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency)** 
 
@@ -127,5 +129,78 @@ be no connections, calling the database, or any other *side effects*. In other w
     }
 ```
 
+### Interpreter
+In the above example nothing happens, and rightly so. Nobody called the `run()` method on our `DB` (in this case, `SelectOp`).
+
+>A piece of code which takes a `DB<A>`, runs it, and returns some other value, is called an **interpreter**
+
+Since running a `DB` requires a `Connection`, the interpreter also needs to know how to spawn connections.
+
+The simplest interpreter we can imagine is one that calls run() in the caller thread, and upon success returns the `DB` result.
+Upon error it throws.
+
+We have such an interpreter baked into `sane-dbc-core`, we just need to supply it with the code which spawns connections,
+and give it a spin:
+
+
+```java
+
+            @Test
+            public void syncInterpreter()
+            {
+                // create a synchronous DB interpreter. It is a stateless object, and the act of creating one is also
+                // referentially transparent
+                SyncDbInterpreter dbi = new SyncDbInterpreter(
+                        // provide a piece of code which knows how to spawn connections
+                        // in this case we are just using the DriverManager
+                        () -> DriverManager.getConnection("jdbc:hsqldb:mem:DescribeVsInterpret", "sa", "")
+                );
+        
+                // submit an Update (mutate) operation which creates a table
+                dbi.submit(new UpdateOp(
+                        "CREATE TABLE FOO (WHATEVER VARCHAR(200))",
+                        NO_BINDER
+                ));
+        
+                // objects we will insert in the table
+                List<String> helloSaneDbc = List.arrayList("hello", "sane", "dbc");
+        
+                //insert some data
+                Option<Integer> updateCount = dbi.submit(
+                        //this describes an operation which inserts an iterable of objects in a table via addBatch / executeBatch
+                        new BatchUpdateOp<>(
+                                "INSERT INTO FOO(WHATEVER) VALUES(?)",
+                                x -> preparedStatement -> preparedStatement.setString(1, x),
+                                helloSaneDbc
+                        )
+                );
+        
+                // the operation returns an optional update count, since the JDBC driver might not return an update count at all
+                assertThat(updateCount, is(some(3)));
+        
+                
+                List<String> result = dbi.submit(
+                        // select all of the objects in the table
+                        new SelectOp.FjList<>("SELECT WHATEVER FROM FOO", NO_BINDER, resultSet -> resultSet.getString(1))
+                );
+        
+                
+                assertThat(result, is(helloSaneDbc));
+            }
+
+``` 
+
+### Summary
+To sum up, `sane-dbc` works with only two abstractions
+
+* A `DB` is a description of operations which will be executed against a database
+* An interpreter is responsible for executing the operations and returning the results. It is also responsible for all the specifics
+of execution, such as connection management, threading, error handling, transactions, etc.
+
+The way it usually works is that you only call the interpreter at the **edge** of your application - the `main` method;
+a webservice method; a testcase. In this way, the bulk of your program only works with `DB` descriptions, and is referentially transparent.
+Side effects are only performed in specific places, and in a controlled manner.
+
+These are all the concepts you need to know to start working with `sane-dbc`. Let's now jump into details.
 
 
