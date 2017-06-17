@@ -12,7 +12,7 @@ to our knowledge the **Java** alternatives currently widespread fall short in on
 
 That is, you use
 * SQL and your RDBMS system's specific facilities to interact with it in the way best suited to your application
-* the DB class to compose operations into larger operations and programs, and to separate DB operations' **definition** from
+* the DB class to compose operations into larger operations and programs, and to separate DB operations' **description** from
 their execution (**interpretation**), which leads to large increase in programmer efficiency and code correctness
 * the facilities provided by `sane-dbc` to achieve common programming tasks, as well as spare yourself from boilerplate, such as the one
 inherent in JDBC
@@ -101,13 +101,31 @@ A run(Connection c) throws SQLException;
 This is exactly the `run` method of the [DB class](https://github.com/functionaljava/functionaljava/blob/master/core/src/main/java/fj/control/db/DB.java).
 We'll be using that from now on.
 
-For operations returning nothing (DB mutations, where we are only interested in changing the tables state), in Java it is
+*For operations returning nothing (DB mutations, where we are only interested in changing the tables state), in Java it is
 customary to use `void`, as above. However, we want to parametrize on the return type, and `java.lang.Void` is strange in that its
 only 'valid' value is `null`, which can lead to NPE. We will instead use another type with only one value which is null-safe -
 [Unit](https://github.com/functionaljava/functionaljava/blob/master/core/src/main/java/fj/Unit.java). You obtain a Unit value
-to return by calling `Unit.unit()`.
+to return by calling `Unit.unit()`.*
 
+### Description
+A `DB` instance is just a **description** of a database interaction. If we just construct a `DB`, nothing will happen - there will
+be no connections, calling the database, or any other *side effects*. In other words, a method returning a `DB` is
+**[referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency)** 
 
- 
+(*all the example code in this tutorial is published in our [repo](sane-dbc-examples/src/test/java/com/novarto/sanedbc/examples)*)
+
+ ```java
+    @Test
+    public void nothingHappens()
+    {
+        @SuppressWarnings("unused")
+        SelectOp.FjList<String> selectThem = new SelectOp.FjList<>(
+                "SELECT FOO FROM WHATEVER",
+                NO_BINDER,
+                rs -> rs.getString(1)
+        );
+    }
+```
+
 
 

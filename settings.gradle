@@ -1,4 +1,6 @@
 rootProject.name = 'sane-dbc'
 include 'sane-dbc-core'
 include 'sane-dbc-hikari'
+include 'sane-dbc-examples'
+
 
