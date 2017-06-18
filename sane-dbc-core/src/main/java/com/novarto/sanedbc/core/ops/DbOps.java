@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.novarto.lang.CanBuildFrom.fjListCanBuildFrom;
 import static fj.data.Option.none;
 import static fj.data.Option.some;
 
@@ -28,14 +29,14 @@ public final class DbOps
     }
 
     /**
-     * Given an existing {@link SelectOp}, converts it to an operation that either returns one result, none at all,
+     * Given an existing {@link DB<Iterable<A>>}, converts it to an operation that either returns one result, none at all,
      * or throws if there is more than one result in the result set.
      *
      * This is useful if you are issuing a query by a single primary key. Such a query is never expected to return > 1 results
      * (in which case the returned DB will throw upon interpretation), but can return no results (which is expressed in the
      * return type)
      */
-    public static <A> DB<Option<A>> unique(SelectOp<A, ?, ?> op)
+    public static <A> DB<Option<A>> unique(DB<? extends Iterable<A>> op)
     {
         return op.map(xs ->
         {
@@ -159,6 +160,14 @@ public final class DbOps
         }
 
         return acc.map(cbf::build);
+    }
+
+    /**
+     * Shorthand of sequence() that returns an fj.data.List
+     */
+    public static <A> DB<fj.data.List<A>> sequence(Iterable<DB<A>> xs)
+    {
+        return sequence(xs, fjListCanBuildFrom());
     }
 
 }

@@ -205,4 +205,25 @@ Side effects are only performed in specific places, and in a controlled manner.
 
 These are all the concepts you need to know to start working with `sane-dbc`. Let's now jump into details.
 
+## Usage
+
+### Basic usage examples
+
+One of the things `sane-dbc` does is provide ready-to-use `DB` implementations for common tasks such as Select, Insert / Update,
+batch Insert / Update, Aggregate (count, etc), and so forth. It's best to see them in action, so take a look at our
+[Basic usage example](sane-dbc-examples/src/test/java/com/novarto/sanedbc/examples/BasicUsage.java)
+
+
+### Composition
+
+### Transactional interpretation
+
+### Asynchronous interpretation
+
+## Advanced concepts
+
+### Design guidelines
+
+### Handling DDL
+
 

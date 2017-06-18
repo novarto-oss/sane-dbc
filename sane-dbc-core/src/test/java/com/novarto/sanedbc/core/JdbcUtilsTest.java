@@ -1,6 +1,5 @@
 package com.novarto.sanedbc.core;
 
-import com.novarto.lang.CanBuildFrom;
 import com.novarto.sanedbc.core.interpreter.SyncDbInterpreter;
 import com.novarto.sanedbc.core.ops.*;
 import fj.P2;
@@ -19,7 +18,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ExecutionException;
 
+import static com.novarto.lang.CanBuildFrom.fjListCanBuildFrom;
 import static com.novarto.sanedbc.core.ops.Binders.NO_BINDER;
+import static com.novarto.sanedbc.core.ops.DbOps.sequence;
 import static fj.P.p;
 import static fj.data.List.arrayList;
 import static fj.data.List.list;
@@ -41,24 +42,18 @@ public class JdbcUtilsTest
     @BeforeClass public static void setupSuite()
     {
 
-        DB.transact(new DB<Unit>()
-        {
-            @Override public Unit run(Connection c) throws SQLException
-            {
-                try (Statement st = c.createStatement())
-                {
-                    st.execute("CREATE TABLE MySqlTest_IDS (ID INTEGER PRIMARY KEY IDENTITY, DUMMY CHAR)");
-                    st.execute("CREATE TABLE MySqlTest_DATA (ID INTEGER PRIMARY KEY, DESCRIPTION VARCHAR(100))");
+        fj.control.db.DB<Unit> createSchema = sequence(
+                arrayList(new EffectOp("CREATE TABLE MySqlTest_IDS (ID INTEGER PRIMARY KEY IDENTITY, DUMMY CHAR)"),
+                        new EffectOp("CREATE TABLE MySqlTest_DATA (ID INTEGER PRIMARY KEY, DESCRIPTION VARCHAR(100))"),
+                        new EffectOp("CREATE TABLE MySqlTest_EXPIRING_STUFF (ID INTEGER PRIMARY KEY IDENTITY,"
+                                + " DESCRIPTION VARCHAR(100), STAMP BIGINT)"),
+                        new EffectOp("CREATE TABLE MySqlTest_FOO (X VARCHAR (100), Y VARCHAR(100))")
 
-                    st.execute("CREATE TABLE MySqlTest_EXPIRING_STUFF (ID INTEGER PRIMARY KEY IDENTITY," +
-                            " DESCRIPTION VARCHAR(100), STAMP BIGINT)");
-                    st.execute("CREATE TABLE MySqlTest_FOO (X VARCHAR (100), Y VARCHAR(100))");
+                )).map(ignore -> Unit.unit());
 
 
-                    return Unit.unit();
-                }
-            }
-        });
+
+        DB.transact(createSchema);
     }
 
     private static BatchInsertGenKeysOp.FjList<String, Integer> insertKeysOp(Iterable<String> dummys)
@@ -321,7 +316,7 @@ public class JdbcUtilsTest
         List<DB<Option<String>>> dbs = arrayList(selectByUniqueDescOp("foo"), selectByUniqueDescOp("zzz"),
                 selectByUniqueDescOp("no_such"));
 
-        List<Option<String>> result = DB.submit(DbOps.sequence(dbs, CanBuildFrom.fjListCanBuildFrom()));
+        List<Option<String>> result = DB.submit(sequence(dbs, fjListCanBuildFrom()));
         assertThat(result, is(arrayList(some("foo"), some("zzz"), none())));
     }
 

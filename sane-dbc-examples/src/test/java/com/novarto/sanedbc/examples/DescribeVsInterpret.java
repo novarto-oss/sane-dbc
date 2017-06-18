@@ -42,7 +42,7 @@ public class DescribeVsInterpret
         SyncDbInterpreter dbi = new SyncDbInterpreter(
                 // provide a piece of code which knows how to spawn connections
                 // in this case we are just using the DriverManager
-                () -> DriverManager.getConnection("jdbc:hsqldb:mem:DescribeVsInterpret", "sa", "")
+                () -> DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "")
         );
 
         // submit an Update (mutate) operation which creates a table
