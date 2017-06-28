@@ -576,6 +576,18 @@ For example, we might want to log a user in, and if successful, return their sal
         assertThat(shouldFail, is(Either.left("auth failure")));
 ```
 
+With `bind` and `map` in our arsenal, we can compose and reuse existing `DB` operations,
+as well as existing business logic functions (pure functions working on data and returning data, without being bothered with database specifics),
+to arrive at composite operations that implement new use cases.
+
+Because we only work with descriptions of DB interaction, and we only ever interpret those at the edge of our app,
+there is no need to propagate `Connection` objects or `throws SqlException` clauses throughout the whole call stack,
+as often happens when working with plain JDBC.
+
+#### `fold`
+
+#### `sequence`
+
 
 ### Transactional interpretation
 
@@ -584,6 +596,10 @@ For example, we might want to log a user in, and if successful, return their sal
 ## Advanced concepts
 
 ### Design guidelines
+
+#### Threading semantics
+
+#### Effective immutability
 
 ### Handling DDL
 
