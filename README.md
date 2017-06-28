@@ -424,6 +424,19 @@ public class BasicUsage
 }
 ```
 
+There's a couple more [built in operations](sane-dbc-core/src/main/java/com/novarto/sanedbc/core/ops) you can use, possibly
+with more coming in the future. Consult the javadoc of the individual operations for more details.
+
+Hopefully we have demonstrated scrapping the JDBC boilerplate into reusable operations makes Java SQL programming reasonable.
+You can further apply this principle to your program by implementing your own `DB` instances.
+
+A good property of the `DB` abstraction is that it is practically zero-cost. There is no SQL generation, automatic object mapping 
+or anything of that sort going on. The total runtime overhead of using sane-dbc is the creation of a constant number of objects
+(usually a couple) per DB operation. This gets amortized by the network call, and even by the creation of your DB's result object.
+
+Another very useful property of the approach is that you are in full control of database interaction. Creating the SQL; supplying the
+input; choosing the exact result type - these are all done by the library user.
+
 
 ### Composition
 
