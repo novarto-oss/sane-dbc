@@ -488,7 +488,6 @@ public static class UserDB
 ```
 
 ```java
-        dbi.submit(UserDB.CREATE_USER_TABLE);
         dbi.submit(UserDB.insertUser("me@that.com", "abcd"));
 
         boolean success = dbi.submit(UserDB.login("me@that.com", "abcd"));
@@ -500,6 +499,12 @@ public static class UserDB
         success = dbi.submit(UserDB.login("larry@this.com", "abcd"));
         assertThat(success, is(false));
 ```
+
+You can imagine many other examples. One might select a list of employees and group them by department, using
+`java.util.stream.Collectors.groupingBy`. Or one might select a product catalog stored flat in a database, and turn it into
+a `fj.data.Tree`. The important thing is, if you need to (and one always needs to) work with the data from your `DB`, you don't
+run it - you just transform the original `DB` description using `map`. This way you delay performing side effects until the edge
+of your app, where you interpret the `DB`.
 
 
 
