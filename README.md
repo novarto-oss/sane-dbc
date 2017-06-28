@@ -451,13 +451,9 @@ The `DB` class defines the following operation:
 public final <B> DB<B> map(final F<A, B> f)
 ```
 So map takes a `DB<A>`, a function `f: A -> B` and returns a `DB<B>`. That happens if the original DB<A> is successful.
-If not, the DB<B> will just contain the original error. By contain, we mean it will throw it upon `run()`.upon `run`
+If not, the `DB<B>` will just contain the original error. By contain, we mean it will throw it upon `run()`.
 
 Let's see `map()` in action by implementing a simple login service (complete source [here](sane-dbc-examples/src/test/java/com/novarto/sanedbc/examples/MapExample1.java)):
-
-```sql
-CREATE TABLE USERS (EMAIL VARCHAR(200) PRIMARY KEY, PASSWORD_HASH VARCHAR(200) NOT NULL)
-```
 
 ```java
 public static class UserDB
