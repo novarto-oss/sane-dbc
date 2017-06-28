@@ -2,6 +2,7 @@ package com.novarto.sanedbc.core;
 
 import com.novarto.sanedbc.core.interpreter.SyncDbInterpreter;
 import com.novarto.sanedbc.core.ops.*;
+import com.novarto.sanedbc.core.ops.optimized.BatchDeleteOptimized;
 import fj.P2;
 import fj.Unit;
 import fj.control.db.DB;
@@ -22,12 +23,12 @@ import static com.novarto.lang.CanBuildFrom.fjListCanBuildFrom;
 import static com.novarto.sanedbc.core.ops.Binders.NO_BINDER;
 import static com.novarto.sanedbc.core.ops.DbOps.sequence;
 import static fj.P.p;
-import static fj.data.List.arrayList;
-import static fj.data.List.list;
+import static fj.data.List.*;
 import static fj.data.Option.none;
 import static fj.data.Option.some;
 import static java.text.MessageFormat.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
@@ -45,8 +46,8 @@ public class JdbcUtilsTest
         fj.control.db.DB<Unit> createSchema = sequence(
                 arrayList(new EffectOp("CREATE TABLE MySqlTest_IDS (ID INTEGER PRIMARY KEY IDENTITY, DUMMY CHAR)"),
                         new EffectOp("CREATE TABLE MySqlTest_DATA (ID INTEGER PRIMARY KEY, DESCRIPTION VARCHAR(100))"),
-                        new EffectOp("CREATE TABLE MySqlTest_EXPIRING_STUFF (ID INTEGER PRIMARY KEY IDENTITY,"
-                                + " DESCRIPTION VARCHAR(100), STAMP BIGINT)"),
+                        new EffectOp("CREATE TABLE MySqlTest_EXPIRING_STUFF (ID INTEGER PRIMARY KEY IDENTITY," +
+                                " DESCRIPTION VARCHAR(100), STAMP BIGINT)"),
                         new EffectOp("CREATE TABLE MySqlTest_FOO (X VARCHAR (100), Y VARCHAR(100))")
 
                 )).map(ignore -> Unit.unit());
@@ -307,6 +308,50 @@ public class JdbcUtilsTest
                 rs -> p(rs.getString(1), rs.getString(2))));
 
         assertThat(readData, is(data));
+    }
+
+    @Test
+    public void emptyBatch()
+    {
+        //make sure empty batches are no-op instead of throwing
+
+        assertThat(
+                DB.transact(new BatchUpdateOp<>(
+                        "whatevs",
+                        ps -> {
+                            throw new RuntimeException();
+                        },
+                        arrayList()
+                )),
+                is(none())
+        );
+
+        assertThat(
+                DB.transact(new BatchInsertGenKeysOp.FjList<>(
+                        "whatevs",
+                        x -> ps -> {
+                            throw new RuntimeException();
+                        },
+                        arrayList(),
+                        rs -> {
+                            throw new RuntimeException();
+                        }
+                )),
+                is(nil())
+        );
+
+        assertThat(
+                DB.submit(
+                        new BatchDeleteOptimized<String>(
+                                "whatevs",
+                                emptyList(),
+                                emptyList(),
+                                (idx, ps, x) -> idx,
+                                100
+                        )
+                ),
+                is(0)
+        );
     }
 
     @Test public void dbSequence()

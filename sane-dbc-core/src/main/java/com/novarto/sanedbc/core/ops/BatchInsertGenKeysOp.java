@@ -19,6 +19,7 @@ public abstract class BatchInsertGenKeysOp<A, B extends Number, C1 extends Itera
     private final Try1<PreparedStatement, Option<Integer>, SQLException> binder;
     private final Try1<ResultSet, B, SQLException> getKey;
     private final CanBuildFrom<B, C1, C2> cbf;
+    private final Iterable<A> as;
 
     public BatchInsertGenKeysOp(String sql, F<A, TryEffect1<PreparedStatement, SQLException>> binder,
             Iterable<A> as, Try1<ResultSet, B, SQLException> getKey, CanBuildFrom<B, C1, C2> cbf)
@@ -27,11 +28,17 @@ public abstract class BatchInsertGenKeysOp<A, B extends Number, C1 extends Itera
         this.binder = batchBinder(binder, as);
         this.getKey = getKey;
         this.cbf = cbf;
+        this.as = as;
     }
 
     @Override
     public C2 run(Connection c) throws SQLException
     {
+        if (Collections.isEmpty(as))
+        {
+            return cbf.build(cbf.createBuffer());
+        }
+
         try (PreparedStatement preparedStatement = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
         {
 

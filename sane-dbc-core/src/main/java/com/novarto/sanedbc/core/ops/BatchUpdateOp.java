@@ -1,5 +1,6 @@
 package com.novarto.sanedbc.core.ops;
 
+import com.novarto.lang.Collections;
 import com.novarto.sanedbc.core.SqlStringUtils;
 import fj.F;
 import fj.control.db.DB;
@@ -17,16 +18,23 @@ public class BatchUpdateOp<A> extends DB<Option<Integer>>
 {
     private final String sql;
     private final Try1<PreparedStatement, Option<Integer>, SQLException> binder;
+    private final Iterable<A> as;
 
     public BatchUpdateOp(String sql, F<A, TryEffect1<PreparedStatement, SQLException>> binder, Iterable<A> as)
     {
         this.binder = batchBinder(binder, as);
+        this.as = as;
         this.sql = sql;
     }
 
     @Override
     public Option<Integer> run(Connection c) throws SQLException
     {
+        if (Collections.isEmpty(as))
+        {
+            return Option.none();
+        }
+
         if (!isInsert(sql))
         {
             throwIfAutoCommit(c);
