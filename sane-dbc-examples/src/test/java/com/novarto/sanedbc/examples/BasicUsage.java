@@ -20,8 +20,10 @@ public class BasicUsage
 {
 
     /*
-     * In a real-world application, DB-related operations are usually encapsulated in a separate module, so that's what we'll do here.
-     * It's kind of like a DAO (Data Access Object) since it provides operations over a table, or a set of logically related tables.
+     * In a real-world application, DB-related operations are usually encapsulated in a separate module,
+     * so that's what we'll do here.
+     * It's kind of like a DAO (Data Access Object) since it provides operations over a table,
+     * or a set of logically related tables.
      *
      * It's different from a DAO in that it does not access the database itself; rather it returns descriptions of how it should
      * be accessed - as already explained.
@@ -155,6 +157,8 @@ public class BasicUsage
     public void testIt()
     {
         SyncDbInterpreter dbi = new SyncDbInterpreter(
+                // provide a piece of code which knows how to spawn connections
+                // in this case we are just using the DriverManager
                 () -> DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", ""
         ));
         dbi.submit(StuffDb.createStuffTable());
@@ -188,7 +192,7 @@ public class BasicUsage
 
     }
 
-    private static class Stuff
+    public static class Stuff
     {
         public final int id;
         public final String description;

@@ -507,6 +507,75 @@ run it - you just transform the original `DB` description using `map`. This way 
 of your app, where you interpret the `DB`.
 
 
+#### `bind` (also known as `flatMap`)
+
+What if we wanted to execute an operation, and upon its success, take the result and execute another operation based on that?
+
+`bind` comes to the rescue:
+
+```java
+public final <B> DB<B> bind(final F<A, DB<B>> f);
+```
+
+So bind takes a `DB<A>` and a function which, given an A, produces a `DB<B>`. The final result is a `DB<B>`.
+(If we had used `map` in this scenario, we would end up with a `DB<DB<B>>`, which is not convenient.)
+
+For example, we might want to log a user in, and if successful, return their sales orders. If not, we return an error message.
+(the full code is available [here](sane-dbc-examples/src/test/java/com/novarto/sanedbc/examples/BindExample.java))
+
+```java
+        //the operation authenticates the user, and reads their orders
+        //it returns either an error message (string), in case the login fails; or the list of orders
+        public static DB<Either<String, List<Order>>> authenticateAndGetOrders(String email, String pass)
+        {
+            // with bind (a.k.a. flatMap), we take the result of one operation, and use it to return another operation
+            return UserDB.login(email, pass).bind(success -> {
+
+                if(!success)
+                {
+                    Either<String, List<Order>> errorMessage = Either.left("auth failure");
+                    // the DB.unit operation returns an immediate result with the passed value, without touching the connection
+                    return DB.unit(errorMessage);
+                }
+
+                return selectOrdersByEmail(email).map(orders -> Either.right(orders));
+            });
+        }
+
+        public static DB<List<Order>> selectOrdersByEmail(String userEmail)
+        {
+            return new SelectOp.FjList<>(
+                    "SELECT ORDER_ID, USER_EMAIL, TEXT FROM ORDERS WHERE USER_EMAIL=?",
+                    ps -> ps.setString(1, userEmail),
+                    rs -> new Order(rs.getInt(1), rs.getString(2), rs.getString(3))
+            );
+        }
+```
+
+```java
+        dbi.submit(UserDB.insertUser("john@doe.com", "abcd"));
+        dbi.submit(UserDB.insertUser("foo@bar.com", "abcd"));
+
+        dbi.submit(
+                OrderDb.insertOrders(
+                        arrayList(new CreateOrder("john@doe.com", "Hi there"),
+                                new CreateOrder("foo@bar.com", "Bye there")
+                        ))
+        );
+
+        Either<String, List<Order>> result = dbi.submit(OrderDb.authenticateAndGetOrders("john@doe.com", "abcd"));
+        assertThat(result.isRight(), is(true));
+
+        List<Order> orders = result.right().value();
+        assertThat(orders.isSingle(), is(true));
+
+        Order johnOrder = orders.head();
+        assertThat(johnOrder.text, is("Hi there"));
+
+        Either<String, List<Order>> shouldFail = dbi.submit(OrderDb.authenticateAndGetOrders("haxx0r", "abcd"));
+        assertThat(shouldFail, is(Either.left("auth failure")));
+```
+
 
 ### Transactional interpretation
 

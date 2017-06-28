@@ -32,7 +32,7 @@ public class MapExample1
 
     public static class UserDB
     {
-        public static DB<Unit> CREATE_USER_TABLE = new EffectOp(
+        public static final DB<Unit> CREATE_USER_TABLE = new EffectOp(
                 "CREATE TABLE USERS (EMAIL VARCHAR(200) PRIMARY KEY, PASSWORD_HASH VARCHAR(200) NOT NULL)"
         );
 
@@ -90,8 +90,6 @@ public class MapExample1
     public void testIt()
     {
         SyncDbInterpreter dbi = new SyncDbInterpreter(
-                // provide a piece of code which knows how to spawn connections
-                // in this case we are just using the DriverManager
                 () -> DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "")
         );
 
