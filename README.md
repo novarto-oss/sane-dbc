@@ -440,6 +440,73 @@ input; choosing the exact result type - these are all done by the library user.
 
 ### Composition
 
+The `DB` abstraction enables us to compose `DB` instances with existing functions, and `DB` instances with other `DB` instances,
+to obtain composite `DB`'s as a result.
+
+#### `map`
+
+The `DB` class defines the following operation:
+
+```java
+public final <B> DB<B> map(final F<A, B> f)
+```
+So map takes a `DB<A>`, a function `f: A -> B` and returns a `DB<B>`. That happens if the original DB<A> is successful.
+If not, the DB<B> will just contain the original error. By contain, we mean it will throw it upon `run()`.upon `run`
+
+Let's see `map()` in action by implementing a simple login service (complete source [here](sane-dbc-examples/src/test/java/com/novarto/sanedbc/examples/MapExample1.java)):
+
+```sql
+CREATE TABLE USERS (EMAIL VARCHAR(200) PRIMARY KEY, PASSWORD_HASH VARCHAR(200) NOT NULL)
+```
+
+```java
+public static class UserDB
+    {
+
+
+        public static DB<Boolean> login(String email, String pass)
+        {
+            //we map an operation DB<Option<User>> with a function which takes an Option<User> and returns a boolean,
+            //resulting in a DB<Boolean>
+            return selectUser(email).map(userOpt -> {
+                if (userOpt.isNone())
+                {
+                    //invalid email
+                    return false;
+                }
+
+                User user = userOpt.some();
+                //check pass hash matches
+                return loginOk(user, pass);
+            });
+        }
+
+        private static boolean loginOk(User user, String password)
+        {
+            return hash(password).equals(user.hash);
+        }
+        
+        private static String hash(String password); // impl omitted
+
+    }
+```
+
+```java
+        dbi.submit(UserDB.CREATE_USER_TABLE);
+        dbi.submit(UserDB.insertUser("me@that.com", "abcd"));
+
+        boolean success = dbi.submit(UserDB.login("me@that.com", "abcd"));
+        assertThat(success, is(true));
+
+        success = dbi.submit(UserDB.login("me@that.com", "wrong"));
+        assertThat(success, is(false));
+
+        success = dbi.submit(UserDB.login("larry@this.com", "abcd"));
+        assertThat(success, is(false));
+```
+
+
+
 ### Transactional interpretation
 
 ### Asynchronous interpretation
