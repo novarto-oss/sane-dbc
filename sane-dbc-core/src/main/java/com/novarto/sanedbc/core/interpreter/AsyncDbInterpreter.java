@@ -1,4 +1,4 @@
-package com.novarto.sanedbc.hikari;
+package com.novarto.sanedbc.core.interpreter;
 
 import com.novarto.lang.SneakyThrow;
 import fj.control.db.DB;
@@ -16,7 +16,7 @@ import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.transactiona
  * and submits {@link DB} instances for execution in an ExecutorService. The result is lifted to a CompletableFuture.
  * The CompletableFuture returned will fail iff the underlying DB throws.
  *
- * Spawning of a connection happens inside an executor service thread, the submitted operation is executed in the same thread,
+ * Spawning of a connection happens inside an executor service thread, the submitted DB operation is executed in the same thread,
  * and then the connection is closed. Therefore, a connection obtained from the pool is accessed by only a single thread
  * before being returned to the pool.
  *
@@ -51,6 +51,7 @@ public class AsyncDbInterpreter
         return withConnection(transactional(op), false);
     }
 
+
     private <A> CompletableFuture<A> withConnection(DB<A> op, boolean autoCommit)
     {
         return CompletableFuture.supplyAsync(() -> {
@@ -61,7 +62,7 @@ public class AsyncDbInterpreter
             catch (Exception e)
             {
                 SneakyThrow.sneakyThrow(e);
-                throw new IllegalStateException();
+                throw new IllegalStateException("this code is unreachable");
             }
         }, executor);
     }

@@ -37,9 +37,15 @@ dependencies {
         changing = true
     }
     
-    // optionally, an asynchronous DB interpreter which utilizes HikariCP as the connection pool implementation and 
-    // ListenableFuture as the result type
+    
+    // HikariCP support
     compile('com.novarto:sane-dbc-hikari:0.9-SNAPSHOT') {
+        changing = true
+    }
+    
+    // The core library provides support for asynchronous interpretation through AsyncDbInterpeter, which returns CompletableFuture
+    // If in addition you require support for Guava ListenableFuture, use this jar:
+    compile('com.novarto:sane-dbc-guava:0.9-SNAPSHOT') {
         changing = true
     }
 }
