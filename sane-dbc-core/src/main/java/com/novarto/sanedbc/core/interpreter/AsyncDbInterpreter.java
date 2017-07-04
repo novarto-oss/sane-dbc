@@ -2,6 +2,7 @@ package com.novarto.sanedbc.core.interpreter;
 
 import com.novarto.lang.SneakyThrow;
 import fj.control.db.DB;
+import fj.function.Try0;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -9,6 +10,7 @@ import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
+import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.lift;
 import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.transactional;
 
 /**
@@ -24,15 +26,21 @@ import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.transactiona
 public class AsyncDbInterpreter
 {
 
-    private final DataSource ds;
+    private final Try0<Connection, SQLException> ds;
     private final ExecutorService executor;
 
 
-    public AsyncDbInterpreter(DataSource ds, ExecutorService ex)
+    public AsyncDbInterpreter(Try0<Connection, SQLException> ds, ExecutorService ex)
     {
         this.ds = ds;
         this.executor = ex;
     }
+
+    public AsyncDbInterpreter(DataSource ds, ExecutorService ex)
+    {
+        this(lift(ds), ex);
+    }
+
 
     /**
      * Submits this operation for execution in the executor service. The operation is executed with connection autoCommit = true,
@@ -69,7 +77,7 @@ public class AsyncDbInterpreter
 
     private Connection getConnection(boolean autoCommit) throws SQLException
     {
-        Connection result = ds.getConnection();
+        Connection result = ds.f();
         result.setAutoCommit(autoCommit);
         return result;
     }

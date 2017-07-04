@@ -2,9 +2,11 @@ package com.novarto.sanedbc.core.interpreter;
 
 import com.novarto.sanedbc.core.ops.DbOps;
 import fj.control.db.DB;
+import fj.function.Try0;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -79,5 +81,13 @@ public final class InterpreterUtils
 
             }
         };
+    }
+
+    /**
+     * Lifts a DataSource to Try0<Connection, SQLException> (i.e. converts it to Try0<Connection, SQLException>)
+     */
+    public static Try0<Connection, SQLException> lift(DataSource ds)
+    {
+        return ds::getConnection;
     }
 }

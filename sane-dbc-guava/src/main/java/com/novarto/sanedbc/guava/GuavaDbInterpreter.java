@@ -3,11 +3,13 @@ package com.novarto.sanedbc.guava;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import fj.control.db.DB;
+import fj.function.Try0;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.lift;
 import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.transactional;
 
 /**
@@ -22,13 +24,18 @@ import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.transactiona
  */
 public class GuavaDbInterpreter
 {
-    private final DataSource ds;
+    private final Try0<Connection, SQLException> ds;
     private final ListeningExecutorService ex;
 
-    public GuavaDbInterpreter(DataSource ds, ListeningExecutorService ex)
+    public GuavaDbInterpreter(Try0<Connection, SQLException> ds, ListeningExecutorService ex)
     {
         this.ds = ds;
         this.ex = ex;
+    }
+
+    public GuavaDbInterpreter(DataSource ds, ListeningExecutorService ex)
+    {
+        this(lift(ds), ex);
     }
 
     /**
@@ -62,7 +69,7 @@ public class GuavaDbInterpreter
 
     private Connection getConnection(boolean autoCommit) throws SQLException
     {
-        Connection result = ds.getConnection();
+        Connection result = ds.f();
         result.setAutoCommit(autoCommit);
         return result;
     }

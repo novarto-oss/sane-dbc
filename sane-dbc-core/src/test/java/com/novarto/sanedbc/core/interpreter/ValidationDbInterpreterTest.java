@@ -6,6 +6,7 @@ import com.novarto.sanedbc.core.ops.UpdateOp;
 import fj.Unit;
 import fj.control.db.DB;
 import fj.data.List;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -79,5 +80,11 @@ public class ValidationDbInterpreterTest
     private DB<List<String>> selectAll()
     {
         return new SelectOp.FjList<>("SELECT * FROM BAR", NO_BINDER, rs -> rs.getString(1));
+    }
+
+    @AfterClass
+    public static void teardownSuite()
+    {
+        DB.transact(new EffectOp("DROP TABLE BAR"));
     }
 }

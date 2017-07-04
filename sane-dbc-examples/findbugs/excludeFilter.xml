@@ -1,0 +1,7 @@
+<FindBugsFilter>
+    <Match>
+        <Class name="com.novarto.sanedbc.examples.DescribeVsInterpret" />
+        <Method name="nothingHappens" />
+        <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    </Match>
+</FindBugsFilter>
