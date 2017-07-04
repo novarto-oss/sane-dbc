@@ -5,7 +5,10 @@ dependencies {
 }
 
 afterEvaluate {
-    findbugs {
-        excludeFilter = file("$projectDir/findbugs/excludeFilter.xml")
+    if(javaconventions.ci)
+    {
+        findbugs {
+            excludeFilter = file("$projectDir/findbugs/excludeFilter.xml")
+        }
     }
 }
