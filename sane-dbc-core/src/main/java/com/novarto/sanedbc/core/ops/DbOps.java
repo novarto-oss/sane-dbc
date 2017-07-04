@@ -2,10 +2,8 @@ package com.novarto.sanedbc.core.ops;
 
 import com.novarto.lang.CanBuildFrom;
 import fj.F;
-import fj.Try;
 import fj.control.db.DB;
 import fj.data.Option;
-import fj.data.Validation;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -56,28 +54,6 @@ public final class DbOps
         });
     }
 
-    /**
-     * Given an existing {@link DB}, converts it to a DB which never throws, provided the encountered error is a subtype of
-     * {@link Exception}. Instead, the failure is converted to the desired failure type by calling errTransform, and returned
-     * inside a failed {@link Validation} instance.
-     *
-     * @param db the operation to convert
-     * @param errTransform a function that takes an exception and returns an <Err>
-     * @param <Err> the desired error type
-     * @return a new {@link DB} which upon interpretation returns a validation instance instead of throwing,
-     * iff the error is a subtype of {@link Exception}
-     */
-    public static <A, Err> DB<Validation<Err, A>> toValidation(DB<A> db, F<Exception, Err> errTransform)
-    {
-
-        return new DB<Validation<Err, A>>()
-        {
-            @Override public Validation<Err, A> run(Connection c) throws SQLException
-            {
-                return Validation.validation(Try.f(() -> db.run(c)).f().toEither().left().map(errTransform::f));
-            }
-        };
-    }
 
 
     public static <A> DB<Integer> toChunks(Iterable<A> xs, F<Iterable<A>, DB<Integer>> getOp, int chunkSize)

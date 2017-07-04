@@ -584,7 +584,9 @@ Because we only work with descriptions of DB interaction, and we only ever inter
 there is no need to propagate `Connection` objects or `throws SqlException` clauses throughout the whole call stack,
 as often happens when working with plain JDBC.
 
-#### `fold`
+#### `fold` (also known as `reduce`)
+
+
 
 #### `sequence`
 

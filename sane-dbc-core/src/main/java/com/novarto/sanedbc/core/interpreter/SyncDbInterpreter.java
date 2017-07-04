@@ -57,14 +57,8 @@ public class SyncDbInterpreter
      */
     public <A> A transact(DB<A> doOp)
     {
-        try (Connection c = ds.f())
-        {
-            return transactional(doOp).run(c);
-        }
-        catch (SQLException e)
-        {
-            throw new RuntimeException(e);
-        }
+
+        return submit(transactional(doOp));
 
     }
 }
