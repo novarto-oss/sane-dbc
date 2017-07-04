@@ -1,7 +1,6 @@
 package com.novarto.sanedbc.hikari;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.novarto.lang.ConcurrentUtil;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
@@ -31,15 +30,15 @@ public class Hikari
         return new HikariDataSource(config);
     }
 
-    public static ListeningExecutorService createExecutorFor(HikariDataSource ds, boolean shutdownOnJvmExit)
+    public static ExecutorService createExecutorFor(HikariDataSource ds, boolean shutdownOnJvmExit)
     {
-        ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+        ExecutorService executor = Executors.newCachedThreadPool();
 
         if (shutdownOnJvmExit)
         {
+            String serviceName = "Shutdown hook for hikari@" + ds.getJdbcUrl();
             final Thread datasourceShutdownHook = new Thread(() -> gracefulShutdown(executor, ds));
-
-            datasourceShutdownHook.setName("Relational DB Shutdown Hook for jdbc url " + ds.getJdbcUrl());
+            datasourceShutdownHook.setName(serviceName);
             Runtime.getRuntime().addShutdownHook(datasourceShutdownHook);
 
         }
@@ -52,7 +51,7 @@ public class Hikari
     public static void gracefulShutdown(ExecutorService ex, HikariDataSource ds)
     {
         ds.close();
-        MoreExecutors.shutdownAndAwaitTermination(ex, 5, TimeUnit.SECONDS);
+        ConcurrentUtil.shutdownAndAwaitTermination(ex, 5, TimeUnit.SECONDS);
     }
 
 }

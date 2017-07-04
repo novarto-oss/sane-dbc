@@ -1,0 +1,6 @@
+dependencies {
+
+    compile project(':sane-dbc-hikari')
+    compile 'com.novarto:lang-guava:0.9-SNAPSHOT'
+
+}

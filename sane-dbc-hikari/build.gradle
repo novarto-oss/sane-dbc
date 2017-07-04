@@ -3,7 +3,6 @@ dependencies {
     compile('com.zaxxer:HikariCP:2.6.1') {
         exclude module: 'slf4j-api'
     }
-    compile 'com.novarto:lang-guava:0.9-SNAPSHOT'
     compile project(':sane-dbc-core')
 
 }

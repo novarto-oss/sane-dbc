@@ -1,44 +1,41 @@
-package com.novarto.sanedbc.hikari;
+package com.novarto.sanedbc.guava;
 
-import com.novarto.lang.SneakyThrow;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import fj.control.db.DB;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.transactional;
 
 /**
- * A standard {@link DB} interpreter that utilizes a data source to spawn connections,
- * and submits {@link DB} instances for execution in an ExecutorService. The result is lifted to a CompletableFuture.
- * The CompletableFuture returned will fail iff the underlying DB throws.
+ * A {@link DB} interpreter that utilizes a data source to spawn connections,
+ * and submits {@link DB} instances for execution in a Guava ListeningExecutorService.
+ * The ListenableFuture returned will fail iff the underlying DB throws.
  *
  * Spawning of a connection happens inside an executor service thread, the submitted operation is executed in the same thread,
  * and then the connection is closed. Therefore, a connection obtained from the pool is accessed by only a single thread
  * before being returned to the pool.
  *
  */
-public class AsyncDbInterpreter
+public class GuavaDbInterpreter
 {
-
     private final DataSource ds;
-    private final ExecutorService executor;
+    private final ListeningExecutorService ex;
 
-
-    public AsyncDbInterpreter(DataSource ds, ExecutorService ex)
+    public GuavaDbInterpreter(DataSource ds, ListeningExecutorService ex)
     {
         this.ds = ds;
-        this.executor = ex;
+        this.ex = ex;
     }
 
     /**
      * Submits this operation for execution in the executor service. The operation is executed with connection autoCommit = true,
      * i.e. non-transactionally.
      */
-    public <A> CompletableFuture<A> submit(DB<A> op)
+    public <A> ListenableFuture<A> submit(DB<A> op)
     {
         return withConnection(op, true);
     }
@@ -46,24 +43,21 @@ public class AsyncDbInterpreter
     /**
      * Submits this operation for execution in the executor service. The operation is executed as a transaction.
      */
-    public <A> CompletableFuture<A> transact(DB<A> op)
+    public <A> ListenableFuture<A> transact(DB<A> op)
     {
         return withConnection(transactional(op), false);
     }
 
-    private <A> CompletableFuture<A> withConnection(DB<A> op, boolean autoCommit)
+    private <A> ListenableFuture<A> withConnection(DB<A> op, boolean autoCommit)
     {
-        return CompletableFuture.supplyAsync(() -> {
+        return ex.submit(() ->
+        {
+
             try (Connection c = getConnection(autoCommit))
             {
                 return op.run(c);
             }
-            catch (Exception e)
-            {
-                SneakyThrow.sneakyThrow(e);
-                throw new IllegalStateException();
-            }
-        }, executor);
+        });
     }
 
     private Connection getConnection(boolean autoCommit) throws SQLException
@@ -72,8 +66,4 @@ public class AsyncDbInterpreter
         result.setAutoCommit(autoCommit);
         return result;
     }
-
-
-
-
 }
