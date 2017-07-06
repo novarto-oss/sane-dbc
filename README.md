@@ -645,12 +645,73 @@ collection from the `ResultSet`, such as `java.util.List` or `fj.data.List`.
 The result of the DB operation will be just like a hashmap from integer to a linkedlist of integer, only difference being neither
 the hashmap, nor the lists can be mutated.
 
-In the advanced section of the tutorial we will discuss why it is good practice to return an immutable object from your `DB`.
+In the advanced section of the tutorial we will discuss when and why it is good practice to return an immutable object from your `DB`.
 
 #### `sequence`
 
 
 ### Interpreters
+
+Since `DB` only **describes** database operations, a lot of aspects are left for interpretation-time. This includes
+
+- JDBC connection management
+- Transactional behaviour
+- Error handling
+- Forking execution in another thread
+
+This is handy, since this way methods returning `DB<A>` are only concerned with selecting from / updating the database and
+building / transforming / composing the result, and nothing else. It also means that the same `DB<A>` instance can be executed
+with different interpreters, yielding a different behaviour.
+
+Interpeters will generally support these two methods:
+
+- `submit` will submit the operation for execution with `autoCommit=true`
+- `transact` will submit the operation transactionally, i.e. with `autoCommit=false`, and the operation will be rolled back
+upon error
+
+Interpreters will require a piece of code at construction time, which is capable of returning JDBC connections. This is just like 
+a `DataSource`, except you don't have to implement the `DataSource` interface.
+
+As we already know, the simplest interpreter is `SyncDbInterprer`. It blocks the caller thread, and tries to execute the operation.
+Upon error it throws RuntimeException. Here it is in action, again:
+
+```sql
+"CREATE TABLE DUMMY (ID INTEGER PRIMARY KEY, X NVARCHAR(200)"
+```
+
+```java
+// a datasource backed by a HikariCP connection pool
+HikariDataSource hikariDS = Hikari.createHikari("jdbc:hsqldb:mem:test", "sa", "", new Properties());
+
+
+SyncDbInterpreter sync = new SyncDbInterpreter(
+    //transform a datasource to a Try0<Connection, SqlException>
+    lift(hikariDS)
+);
+
+sync.submit(new EffectOp("INSERT INTO DUMMY VALUES(1,'a')"));
+Long count = sync.submit(new AggregateOp("SELECT COUNT(*) FROM DUMMY"));
+assertThat(count, is(1L));
+
+try
+{
+    sync.transact(new EffectOp(
+        "INSERT INTO DUMMY VALUES((2, 'b'), (1,'a'))"
+    ));
+    fail("expected constraint violation");
+}
+catch (RuntimeException e)
+{
+    assertThat(e.getCause(), is(instanceOf(SQLException.class)));
+    count = sync.submit(new AggregateOp("SELECT COUNT(*) FROM DUMMY"));
+    //transactional, no records were updated
+    assertThat(count, is(1L));
+}
+```
+
+Okay, so 
+- We can supply interpreters with a data source; we can easily construct a production-suitable one, too;
+- We can achieve transactional behaviour by calling `transact()` instead of `submit` 
 
 
 
@@ -663,5 +724,7 @@ In the advanced section of the tutorial we will discuss why it is good practice 
 #### Effective immutability
 
 ### Handling DDL
+
+### Implementing your own interpreter
 
 

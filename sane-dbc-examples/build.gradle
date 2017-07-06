@@ -1,6 +1,7 @@
 dependencies {
     compile project (':sane-dbc-core')
     compile project (':sane-dbc-hikari')
+    compile project (':sane-dbc-guava')
 
 }
 
