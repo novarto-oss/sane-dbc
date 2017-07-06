@@ -7,6 +7,7 @@ import com.novarto.sanedbc.core.ops.EffectOp;
 import com.novarto.sanedbc.core.ops.SelectOp;
 import fj.Unit;
 import fj.control.db.DB;
+import org.junit.After;
 import org.junit.Test;
 
 import java.sql.DriverManager;
@@ -103,6 +104,16 @@ public class MapExample2
         {
             return "Employee{" + "id=" + id + ", name='" + name + '\'' + ", departmentId=" + departmentId + '}';
         }
+    }
+
+    @After
+    public void tearDown()
+    {
+        SyncDbInterpreter dbi = new SyncDbInterpreter(
+                () -> DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "")
+        );
+        dbi.submit(new EffectOp("DROP TABLE EMPLOYEES"));
+
     }
 
 

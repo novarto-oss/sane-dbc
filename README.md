@@ -592,14 +592,67 @@ as often happens when working with plain JDBC.
 
 #### `fold` (also known as `reduce`)
 
+Folding is the process of taking an iterable of things, and collapsing them to a single result.
+Some examples of folds are:
+- `java.util.stream.Stream.reduce()`
+- `fj.data.List.foldLeft()`
+- `fj.data.List.foldRight()`
 
+One obvious way to fold a `ResultSet` into a single thing is to first get a `DB<Iterable<A>>` (for example, via a `SelectOp`)
+and then do:
+```java
+db.map(iterable -> iterable.reduce(...));
+``` 
+
+This approach is fine in general; but it could be suboptimal if the `ResultSet` is very large, since we are constructing
+an intermediate `Iterable` that we later discard.
+
+We can do better: we can do the reduction directly while iterating the `ResultSet`, without using an intermediate collection:
+(full source [here](sane-dbc-examples/src/test/java/com/novarto/sanedbc/examples/FoldExample.java))
+```java
+// we will select employees and group them by department
+// the result type is immutable map from integer (department id) to a immutable list of employees from that department
+FoldLeftSelectOp<HashArrayMappedTrie<Integer, List<Employee>>> selectGroupedByDepartment =
+new FoldLeftSelectOp<>(
+    "SELECT * FROM EMPLOYEES",
+    NO_BINDER,
+    (soFar, rs) -> {
+        // the current row of the resultset, which we will append to the result so far
+        Employee employee = new Employee(rs.getInt(1), rs.getString(2), rs.getInt(3));
+
+        // the employees collected so far for this department
+        // if this is the first employee of this department, fromThisDepartment will be none()
+        Option<List<Employee>> fromThisDepartment = soFar.find(employee.departmentId);
+
+        return fromThisDepartment
+            //in case there are already employees collected for this department,
+            //append this employee to the already collected (cons)
+            //and update the map so far, associating departmentId with the appended list
+            .map(employees -> soFar.set(employee.departmentId, employees.cons(employee)))
+            //otherwise update the map so far, associating departmentId with a sized-one list
+            //containing this employee
+            .orSome(() -> soFar.set(employee.departmentId, List.single(employee)));
+        },
+
+        initial
+    );
+```
+
+Perhaps that was a handful to grasp if you're not used to working with immutable collections. The point is, we are doing a 
+reduction while directly iterating the `ResultSet`, with an empty initial value, without resorting to building an intermediate
+collection from the `ResultSet`, such as `java.util.List` or `fj.data.List`.
+
+The result of the DB operation will be just like a hashmap from integer to a linkedlist of integer, only difference being neither
+the hashmap, nor the lists can be mutated.
+
+In the advanced section of the tutorial we will discuss why it is good practice to return an immutable object from your `DB`.
 
 #### `sequence`
 
 
-### Transactional interpretation
+### Interpreters
 
-### Asynchronous interpretation
+
 
 ## Advanced concepts
 
