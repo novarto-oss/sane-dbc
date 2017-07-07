@@ -26,7 +26,7 @@ public final class InterpreterUtils
      * Returns an operation that will try to rollback the given operation upon failure.
      *
      * - Upon any instance of {@link Throwable} caught, a connection rollback will be issued
-     * - The original throwable instance will be preserved without being mutated
+     * - The original throwable instance will be preserved without being wrapped
      * - If the connection auto-commit was mutated as part of this transformation, connection setAutoCommit
      *  will be finally issued to the connection.
      */
@@ -37,45 +37,45 @@ public final class InterpreterUtils
         {
             @Override public A run(Connection c) throws SQLException
             {
-                boolean wasAutocommit = c.getAutoCommit();
+                final boolean wasAutocommit = c.getAutoCommit();
+                Throwable th = null;
                 if (wasAutocommit)
                 {
                     c.setAutoCommit(false);
                 }
+
                 try
                 {
                     A result = op.run(c);
                     c.commit();
                     return result;
                 }
-                catch (RuntimeException | SQLException e)
+                catch (Throwable e)
                 {
+                    th = e;
                     c.rollback();
                     throw e;
 
                 }
-                catch (Error e)
+                finally
                 {
                     try
                     {
-                        c.rollback();
+                        if (wasAutocommit)
+                        {
+                            c.setAutoCommit(true);
+                        }
                     }
-                    catch (SQLException sqlE)
+                    catch (SQLException e)
                     {
-                        LOGGER.error("Could not roll back transaction which failed with java.lang.Error", sqlE);
-                    }
-                    throw e;
-                }
-                catch (Throwable t)
-                {
-                    c.rollback();
-                    throw t;
-                }
-                finally
-                {
-                    if (wasAutocommit)
-                    {
-                        c.setAutoCommit(true);
+                        if (th != null)
+                        {
+                            th.addSuppressed(e);
+                        }
+                        else
+                        {
+                            throw e;
+                        }
                     }
                 }
 
