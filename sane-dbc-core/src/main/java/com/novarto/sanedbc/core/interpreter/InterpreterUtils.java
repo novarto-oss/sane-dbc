@@ -53,18 +53,8 @@ public final class InterpreterUtils
                 catch (Throwable e)
                 {
                     th = e;
-                    try
-                    {
-                        c.rollback();
-                        throw e;
-                    }
-                    catch (SQLException rollbackFailed)
-                    {
-                        rollbackFailed.addSuppressed(e);
-                        th = rollbackFailed;
-                        throw rollbackFailed;
-                    }
-
+                    c.rollback();
+                    throw e;
 
                 }
                 finally
