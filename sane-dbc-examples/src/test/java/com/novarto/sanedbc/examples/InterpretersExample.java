@@ -1,5 +1,8 @@
 package com.novarto.sanedbc.examples;
 
+import com.novarto.lang.ConcurrentUtil;
+import com.novarto.lang.testutil.TestUtil;
+import com.novarto.sanedbc.core.interpreter.AsyncDbInterpreter;
 import com.novarto.sanedbc.core.interpreter.SyncDbInterpreter;
 import com.novarto.sanedbc.core.interpreter.ValidationDbInterpreter;
 import com.novarto.sanedbc.core.ops.AggregateOp;
@@ -15,8 +18,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.lift;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -91,5 +97,54 @@ public class InterpretersExample
         assertThat(failExpected.isFail(), is(true));
         assertThat(failExpected.fail(), is(rte));
 
+        ExecutorService ex = Executors.newCachedThreadPool();
+        try
+        {
+            // submits DB operations using the supplied executor, returns CompletableFuture<A>
+            AsyncDbInterpreter async = new AsyncDbInterpreter(lift(hikariDS), ex);
+
+            CompletableFuture<Long> countFuture = async.submit(new AggregateOp("SELECT COUNT(*) FROM DUMMY"));
+            //blocking call, don't do this in production
+            Long theCount = countFuture.get();
+            assertThat(theCount, is(1L));
+
+            CompletableFuture<Long> failedFuture = async.submit(new AggregateOp("BLA BLA BLA"));
+
+            //blocking call, don't do in production
+            TestUtil.waitFor(() -> failedFuture.isCompletedExceptionally(), 5, SECONDS);
+
+            Throwable failure = getFailure(failedFuture);
+
+            assertThat(failure.getCause(), instanceOf(SQLException.class));
+
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+            throw new RuntimeException(e);
+        }
+        finally
+        {
+            ConcurrentUtil.shutdownAndAwaitTermination(ex, 5, SECONDS);
+        }
+
+    }
+
+    private Throwable getFailure(CompletableFuture<?> future)
+    {
+        AtomicReference<Throwable> result = new AtomicReference<>();
+        future.whenComplete((x, ex) -> {
+            if (x != null)
+            {
+                throw new IllegalStateException();
+            }
+            result.set(ex);
+        });
+
+        if (result.get() == null)
+        {
+            throw new IllegalStateException();
+        }
+
+        return result.get();
     }
 }

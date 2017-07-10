@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.lift;
 import static com.novarto.sanedbc.core.interpreter.InterpreterUtils.transactional;
 
+
 /**
  * A standard {@link DB} interpreter that utilizes a data source to spawn connections,
  * and submits {@link DB} instances for execution in an ExecutorService. The result is lifted to a CompletableFuture.

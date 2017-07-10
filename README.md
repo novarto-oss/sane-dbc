@@ -745,6 +745,36 @@ Validation<Exception, Long> failExpected = vdb.submit(new DB<Long>()
 assertThat(failExpected.isFail(), is(true));
 assertThat(failExpected.fail(), is(rte));
 ```
+#### `AsyncDbInterpreter`
+
+The examples so far have the property of blocking the caller thread when we call `submit`/`transact`. For some use cases this might be 
+unsuitable. For example, if we are in a HTTP worker thread, we don't want to hijack it while blocking on JDBC.
+
+In such cases you can use an [AsyncDbInterpreter](sane-dbc-core/src/main/java/com/novarto/sanedbc/core/interpreter/AsyncDbInterpreter.java).
+It returns a `CompletableFuture<A>` which will be completed exceptionally iff the underlying `DB` throws; otherwise it will be
+completed successfully.
+
+```java
+ExecutorService ex = Executors.newCachedThreadPool();
+
+// submits DB operations using the supplied executor, returns CompletableFuture<A>
+AsyncDbInterpreter async = new AsyncDbInterpreter(lift(hikariDS), ex);
+
+CompletableFuture<Long> countFuture = async.submit(new AggregateOp("SELECT COUNT(*) FROM DUMMY"));
+//blocking call, don't do this in production
+Long theCount = countFuture.get();
+assertThat(theCount, is(1L));
+
+CompletableFuture<Long> failedFuture = async.submit(new AggregateOp("BLA BLA BLA"));
+
+//blocking call, don't do in production
+TestUtil.waitFor(() -> failedFuture.isCompletedExceptionally(), 5, SECONDS);
+
+Throwable failure = getFailure(failedFuture);
+
+assertThat(failure.getCause(), instanceOf(SQLException.class));
+```
+
 
 
 ## Advanced concepts
