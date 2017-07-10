@@ -1,13 +1,17 @@
 package com.novarto.sanedbc.examples;
 
 import com.novarto.sanedbc.core.interpreter.SyncDbInterpreter;
+import com.novarto.sanedbc.core.interpreter.ValidationDbInterpreter;
 import com.novarto.sanedbc.core.ops.AggregateOp;
 import com.novarto.sanedbc.core.ops.EffectOp;
 import com.novarto.sanedbc.hikari.Hikari;
 import com.zaxxer.hikari.HikariDataSource;
+import fj.control.db.DB;
+import fj.data.Validation;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -66,6 +70,26 @@ public class InterpretersExample
 
         }
 
+        //construct an interpreter that turns the result type to Validation<Exception, A>
+        //we can reuse the same data source across multiple interpreters
+        ValidationDbInterpreter vdb = new ValidationDbInterpreter(lift(hikariDS));
+
+        Validation<Exception, Long> successExpected = vdb.submit(new AggregateOp("SELECT COUNT(*) FROM DUMMY"));
+        assertThat(successExpected.isSuccess(), is(true));
+        assertThat(successExpected.success(), is(1L));
+
+        RuntimeException rte = new RuntimeException("failed I have");
+        Validation<Exception, Long> failExpected = vdb.submit(new DB<Long>()
+        {
+            @Override public Long run(Connection c) throws SQLException
+            {
+                // all subclasses of java.lang.Exception and lifted to Validation, not just SqlException
+                throw rte;
+            }
+        });
+
+        assertThat(failExpected.isFail(), is(true));
+        assertThat(failExpected.fail(), is(rte));
 
     }
 }

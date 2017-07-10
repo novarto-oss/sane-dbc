@@ -672,6 +672,8 @@ upon error
 Interpreters will require a piece of code at construction time, which is capable of returning JDBC connections. This is just like 
 a `DataSource`, except you don't have to implement the `DataSource` interface.
 
+#### `SyncDbInterpreter`
+
 As we already know, the simplest interpreter is `SyncDbInterprer`. It blocks the caller thread, and tries to execute the operation.
 Upon error it throws RuntimeException. Here it is in action, again:
 
@@ -709,10 +711,40 @@ catch (RuntimeException e)
 }
 ```
 
-Okay, so 
+Thus far we can see that
 - We can supply interpreters with a data source; we can easily construct a production-suitable one, too;
-- We can achieve transactional behaviour by calling `transact()` instead of `submit` 
+- We can achieve transactional behaviour by calling `transact()` instead of `submit()` 
 
+#### `ValidationDbInterpreter`
+Next, we might want to take a more principled approach to error handling. A common technique is to embed the exception that `run`
+can throw in the return type of our interpreter, thus treating errors as regular values, instead of relying on try / catch.
+
+You can achieve this behaviour by utilising [ValidationDbInterpreter](sane-dbc-core/src/main/java/com/novarto/sanedbc/core/interpreter/ValidationDbInterpreter.java).
+Its return type is `Validation<Exception, A>`. It is a box which either contains the failure - `java.lang.Exception`, or the
+successful result `<A>`.
+
+```java
+//construct an interpreter that turns the result type to Validation<Exception, A>
+// we can reuse the same data source across multiple interpreters
+ValidationDbInterpreter vdb = new ValidationDbInterpreter(lift(hikariDS));
+
+Validation<Exception, Long> successExpected = vdb.submit(new AggregateOp("SELECT COUNT(*) FROM DUMMY"));
+assertThat(successExpected.isSuccess(), is(true));
+assertThat(successExpected.success(), is(1L));
+
+RuntimeException rte = new RuntimeException("failed I have");
+Validation<Exception, Long> failExpected = vdb.submit(new DB<Long>()
+{
+    @Override public Long run(Connection c) throws SQLException
+    {
+        // all subclasses of java.lang.Exception and lifted to Validation, not just SqlException
+        throw rte;
+    }
+});
+
+assertThat(failExpected.isFail(), is(true));
+assertThat(failExpected.fail(), is(rte));
+```
 
 
 ## Advanced concepts
