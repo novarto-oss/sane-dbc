@@ -649,6 +649,32 @@ In the advanced section of the tutorial we will discuss when and why it is good 
 
 #### `sequence`
 
+Sometimes you end up with an iterable of `DB<A>`. It is convenient to treat that as a single DB<List<A>>, containing the
+aggregated result. This is achieved via the `sequence` operator.
+
+>> If you find yourself in need to use `sequence`, first investigate if you can change your SQL query so that it returns all
+the results in a single `DB`, in one go. That will usually be more performant.
+
+```java
+import static com.novarto.sanedbc.core.ops.DbOps.sequence;
+```
+
+```java
+//given an iterable of DB's
+List<DB<String>> dbList = arrayList(
+    DB.unit("foo"),
+    DB.unit("bar"),
+    DB.unit("baz")
+);
+
+//we can treat it as a DB<List>
+DB<List<String>> db = sequence(dbList);
+
+List<String> result = dbi.submit(db);
+
+assertThat(result, is(arrayList("foo", "bar", "baz")));
+```
+
 
 ### Interpreters
 
