@@ -200,9 +200,9 @@ and give it a spin:
 
 *By interpreting the `DB` result in our code using a `SyncDbInterpeter`, we explicitly state we do not not care about error handling, or about the caller thread getting blocked waiting on JDBC. This is mostly useful (and convenient) in unit testing your app's `DB` layer. Later we will learn about interpreters more suitable for production code.*
 
--### Summary
+### Summary
 
- -To sum up, `sane-dbc` works with only two abstractions
+`sane-dbc` works with only two abstractions
 
 * A `DB` is a description of operations which will be executed against a database
 * An interpreter is responsible for executing the operations and returning the results. It is also responsible for all the specifics
