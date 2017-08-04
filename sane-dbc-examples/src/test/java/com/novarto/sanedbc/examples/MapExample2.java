@@ -46,8 +46,9 @@ public class MapExample2
 
         DB<List<Employee>> selectEmployees = EmployeeDb.selectByIds(asList(2, 1, 4, 3));
 
-        DB<Map<Integer, List<Employee>>> selectEmployeesById = selectEmployees
-                .map(employees -> employees.stream().collect(Collectors.groupingBy(employee -> employee.departmentId)));
+        DB<Map<Integer, List<Employee>>> selectEmployeesById = selectEmployees.map(employees ->
+                employees.stream().collect(Collectors.groupingBy(employee -> employee.departmentId))
+        );
 
 
         Map<Integer, List<Employee>> expected = new HashMap<>();

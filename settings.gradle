@@ -3,5 +3,6 @@ include 'sane-dbc-core'
 include 'sane-dbc-hikari'
 include 'sane-dbc-guava'
 include 'sane-dbc-examples'
+include 'sane-dbc-netty'
 
 

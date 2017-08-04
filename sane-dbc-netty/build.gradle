@@ -1,6 +1,8 @@
 dependencies {
+
     compile project(':sane-dbc-core')
-    compile 'com.novarto:lang-guava:0.9-SNAPSHOT'
+    compile 'io.netty:netty-common:4.1.11.Final'
 
     testCompile project(':sane-dbc-hikari')
+
 }

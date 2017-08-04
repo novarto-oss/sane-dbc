@@ -3,6 +3,7 @@ package com.novarto.sanedbc.hikari;
 import com.novarto.lang.ConcurrentUtil;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import fj.F0;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,15 @@ public class Hikari
 
     public static ExecutorService createExecutorFor(HikariDataSource ds, boolean shutdownOnJvmExit)
     {
-        ExecutorService executor = Executors.newCachedThreadPool();
+        return createExecutorFor(ds, shutdownOnJvmExit, Executors::newCachedThreadPool);
+
+    }
+
+    public static <A extends ExecutorService> A createExecutorFor(HikariDataSource ds, boolean shutdownOnJvmExit,
+            F0<A> ctor
+    )
+    {
+        A executor = ctor.f();
 
         if (shutdownOnJvmExit)
         {
