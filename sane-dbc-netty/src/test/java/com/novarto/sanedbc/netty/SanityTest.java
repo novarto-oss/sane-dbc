@@ -63,8 +63,8 @@ public class SanityTest
 
     private static Throwable awaitAndGetFailure(Future<?> failure)
     {
-        Throwable result = tryTo(() -> failure.await()).cause();
-        if(result == null)
+        Throwable result = tryTo(failure::await).cause();
+        if (result == null)
         {
             throw new IllegalStateException("expected throwable, got: " + failure.getNow());
         }
