@@ -4,7 +4,7 @@ Everyone is welcome to contrubute. Maintainers, contributors and users alike are
 
 # Coding guidelines
 
-If this is your first contribution, browse around the code to acquaint yourself with the coding style. We follow common sense and 
+If this is your first contribution, browse around the code to acquaint yourself with the coding style. We aim to follow common sense and 
 functional programming principles. In addition, since you are working on a very minimalistic library, code must be bloat-free and
 not obviously non-performant.
 
