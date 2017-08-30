@@ -32,7 +32,7 @@ If in doubt what the above means, act optimistically and send us a pull request,
 You need to set the system properties `PUBLISH_USER` and `PUBLISH_KEY` to a valid value in the console
 
 ### Snapshot publish
-`gradlew artifactoryPublish`
+`./gradlew artifactoryPublish`
 
 ### Release publish
-`gradlew bintrayUpload`
+`./gradlew bintrayUpload`
