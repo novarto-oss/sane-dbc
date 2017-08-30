@@ -10,6 +10,8 @@ not obviously non-performant.
 
 Bugfixes and new features must come with tests.
 
+New features / APIs should come with javadoc, [examples](sane-dbc-examples) and an entry in the [tutorial](README.md).
+
 **Avoid ad-hoc abstractions**. The aim of the project is to bring principled RDBMS interaction to the Java programming language. 
 This type of work has been long present in other languages - Haskell, Scala and others. Look for inspiration there. Aim for new APIs
 to be canonical and follow established mathematical structure and laws.
