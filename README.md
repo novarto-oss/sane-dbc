@@ -869,6 +869,55 @@ and everything will work out of the box.
 
 ### Handling DDL
 
+Creating table definitions, altering them, inserting predefined data (such as, say, the default system user in a 
+`USERS` table), and migrating existing data to reflect table alterations, are a bit different from regular `DB` code:
+
+- Each instance of such actions should happen at most once;
+- They should usually happen at application startup time, or at the first time the database is accessed;
+- Their failure often indicates a fatal problem, and the application should shut down forcefully instead of proceeding.
+
+Due to these considerations, we recommend you keep such actions separate from the rest of your code, and that you utilize 
+a library which knows how to handle database migrations. In terms of a library, we have found that
+[flyway](https://github.com/flyway/flyway) does the job well. Here is an [example](TODO) which shows how to use `flyway` 
+in your code.
+
+
 ### Implementing your own interpreter
 
+Implementing your own interpreter is very straightforward. There is no specific interface to implement, but the user will 
+usually expect these two methods:
 
+- `submit`, which executes the `DB` non-transactionally
+- `transact`, which executes the `DB` transactionally, i.e. `commit`s at the end of the pipeline and rolls back in case of
+failure
+
+If you need to implement your own interpreter, it is best to look at some existing ones:
+
+- [the most straightforward one](sane-dbc-core/src/main/java/com/novarto/sanedbc/core/interpreter/SyncDbInterpreter.java)
+- [example with CompletableFuture](sane-dbc-core/src/main/java/com/novarto/sanedbc/core/interpreter/AsyncDbInterpreter.java)
+- [example with Guava](sane-dbc-guava/src/main/java/com/novarto/sanedbc/guava/GuavaDbInterpreter.java)
+
+We recommend you reuse the [existing](sane-dbc-core/src/main/java/com/novarto/sanedbc/core/interpreter/InterpreterUtils.java) logic
+around commit / rollback, as is done in the examples above.
+
+
+#### Why is there no 'Interpreter' interface?
+
+An interpreter interface cannot be expressed in Java in a typesafe way. Conceptually, an interpreter is parametric on two
+things:
+
+- The result type of the interpretation, say `Future`, `CompletableFuture`, `Validation`, etc, which itself is type-parametric
+- The result type of the `DB<A>` being interpreted, namely `A`
+
+Since the type of the interpretation is itself type-parametric, we need [higher-kinded types](https://en.wikipedia.org/wiki/Kind_(type_theory))
+to express it. Java does not have this feature, therefore the interface does not exist in the library.
+
+If this were `Scala`, we would write something along the lines of
+```scala
+trait DbInterpreter[F[_]] {
+    def submit[A](db: DB[A]) : F[A]
+    def transact[A](db: DB[A]) : F[A]
+  }
+```
+
+That is, for a fixed thing `F` which takes a type parameter, and a `DB<A>` being interpreted, return an `F<A>`.
