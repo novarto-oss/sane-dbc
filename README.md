@@ -12,14 +12,7 @@ A sane approach to interacting with an RDBMS in Java
   * [Usage](#usage)
     + [Basic usage examples](#basic-usage-examples)
     + [Composition](#composition)
-      - [`map`](#-map-)
-      - [`bind` (also known as `flatMap`)](#-bind---also-known-as--flatmap--)
-      - [`fold` (also known as `reduce`)](#-fold---also-known-as--reduce--)
-      - [`sequence`](#-sequence-)
     + [Interpreters](#interpreters)
-      - [`SyncDbInterpreter`](#-syncdbinterpreter-)
-      - [`ValidationDbInterpreter`](#-validationdbinterpreter-)
-      - [`AsyncDbInterpreter`](#-asyncdbinterpreter-)
   * [Advanced concepts](#advanced-concepts)
     + [Design guidelines](#design-guidelines)
       - [Threading model](#threading-model)
@@ -27,8 +20,6 @@ A sane approach to interacting with an RDBMS in Java
       - [Serializing immutable types](#serializing-immutable-types)
     + [Handling DDL](#handling-ddl)
     + [Implementing your own interpreter](#implementing-your-own-interpreter)
-      - [Why is there no 'Interpreter' interface?](#why-is-there-no--interpreter--interface-)
-
 
 # Intro
 `sane-dbc` addresses the aspect of RDBMS interaction in the Java programming language.
