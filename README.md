@@ -834,7 +834,7 @@ Therefore the way to execute DB operations in parallel, is to submit them using 
 One consequence of separating description and interpretation is that the result of a `DB` operation may be consumed on a different
 thread than the one producing the `DB` result. Therefore the result type `A` of a `DB<A>` must be thread safe.  
 
-A simple and performant way to ensure thread safety is to make all your `DB` return types **immutable**. `
+A simple and performant way to ensure thread safety is to make all your `DB` return types **immutable**.
 You may have noticed that's what we do in all the examples in this repo, and there is a good reason.
 This way you are thread-safe
 by virtue of immutability, and no synchronization / locking / CAS takes place. 
