@@ -804,15 +804,68 @@ Throwable failure = getFailure(failedFuture);
 assertThat(failure.getCause(), instanceOf(SQLException.class));
 ```
 
-
-
 ## Advanced concepts
 
 ### Design guidelines
 
-#### Threading semantics
+This chapter outlines best practices and design considerations when using `sane-dbc`.
+
+#### Threading model
+Since `DB` is only involved with describing operations, it never performs any forking itself. This means that in a composite
+
+`DB` operation (*pipeline*), all operations composing it happen in the same thread, and in sequence, e.g.
+
+```java
+    someDbOp() // is eventually interpreted in a thread 'X'
+        .map(function1) //happens in thread 'X'
+        .bind(result -> anotherDbOp(result)) //lambda called in thread 'X', and anotherDbOp() interpreted in thread 'X'
+        .map(otherFunction) //thread 'X' again
+```
+
+Therefore the way to execute DB operations in parallel, is to submit them using one of the asynchronous interpreters, e.g.
+```java
+    AsyncDbInterpreter ai = ...;
+    CompletableFuture<A> aFuture = ai.submit(op1);
+    CompletableFuture<B> bFuture = ai.transact(op2);
+``` 
 
 #### Effective immutability
+
+One consequence of separating description and interpretation is that the result of a `DB` operation may be consumed on a different
+thread than the one producing the `DB` result. Therefore the result type `A` of a `DB<A>` must be thread safe.  
+
+A simple and performant way to ensure thread safety is to make all your `DB` return types **immutable**. `
+You may have noticed that's what we do in all the examples in this repo, and there is a good reason.
+This way you are thread-safe
+by virtue of immutability, and no synchronization / locking / CAS takes place. 
+
+Furthermore, we strongly encourage you use
+true immutable collection types, as opposed to `java.util.Collections.unmodifiableXXX` wrappers, so that you do not have to incur
+the overhead of copying. Such collection types can be found in popular libraries such as `functionaljava`, `vavr`, `guava`, etc.
+
+`sane-dbc` is already made to work well with `functionaljava`. If you need to integrate another collection framework, that's
+fairly straightforward:
+
+* All the operations in the library dealing with collections take an `Iterable<A>` and therefore do not assume mutability
+* You can make a `SelectOp` return any collection type, by either supplying a custom `CanBuildFrom` instance, or subclassing
+`AbstractSelectOp`, which does not even assume an iterable, but works with any type
+
+A thing worth noting is that while the *final* return type of your (potentially) composite DB should be immutable,
+there is nothing preventing you from utilizing mutable data types in the *intermediate* operations in the pipeline.
+This is because of the guarantee that all operations in the pipeline happen in a single thread. This is showcased in
+[this example](sane-dbc-examples/src/test/java/com/novarto/sanedbc/examples/EffectivelyImmutable.java).
+
+#### Serializing immutable types
+
+If you are writing REST services or something similar, chances are you will need to serialize your `DB` result to `JSON`.
+For `functionaljava` collections, we recommend utilizing [jackson-module-fj](https://github.com/novarto-oss/jackson-module-fj).
+
+Similar functionality exists for other immutable collection libraries.
+
+To serialize / deserialize immutable beans/domain objects, one uses [jackson-modules-java8](https://github.com/FasterXML/jackson-modules-java8).
+If you are using `jackson-module-fj`, it registers `jackson-modules-java8` automatically for you,
+and everything will work out of the box.
+
 
 ### Handling DDL
 
