@@ -1,6 +1,35 @@
 # sane-dbc
 A sane approach to interacting with an RDBMS in Java
 
+- [Intro](#intro)
+- [Quickstart](#quickstart)
+- [Tutorial](#tutorial)
+  * [Concepts](#concepts)
+    + [The essence of a JDBC interaction](#the-essence-of-a-jdbc-interaction)
+    + [Description](#description)
+    + [Interpreter](#interpreter)
+    + [Summary](#summary)
+  * [Usage](#usage)
+    + [Basic usage examples](#basic-usage-examples)
+    + [Composition](#composition)
+      - [`map`](#-map-)
+      - [`bind` (also known as `flatMap`)](#-bind---also-known-as--flatmap--)
+      - [`fold` (also known as `reduce`)](#-fold---also-known-as--reduce--)
+      - [`sequence`](#-sequence-)
+    + [Interpreters](#interpreters)
+      - [`SyncDbInterpreter`](#-syncdbinterpreter-)
+      - [`ValidationDbInterpreter`](#-validationdbinterpreter-)
+      - [`AsyncDbInterpreter`](#-asyncdbinterpreter-)
+  * [Advanced concepts](#advanced-concepts)
+    + [Design guidelines](#design-guidelines)
+      - [Threading model](#threading-model)
+      - [Effective immutability](#effective-immutability)
+      - [Serializing immutable types](#serializing-immutable-types)
+    + [Handling DDL](#handling-ddl)
+    + [Implementing your own interpreter](#implementing-your-own-interpreter)
+      - [Why is there no 'Interpreter' interface?](#why-is-there-no--interpreter--interface-)
+
+
 # Intro
 `sane-dbc` addresses the aspect of RDBMS interaction in the Java programming language.
 
