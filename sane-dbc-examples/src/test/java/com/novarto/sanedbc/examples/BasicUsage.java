@@ -141,11 +141,11 @@ public class BasicUsage
          */
         public static DB<Long> count(String like)
         {
-            String searchQuery = like.trim().toLowerCase();
+            String searchQuery = like.trim();
 
             //an aggregate op expects the resultset to have one element, and that element to be cast to long
             //useful for numeric aggregate operations
-            return new AggregateOp("SELECT COUNT(*) FROM STUFF WHERE DESCRIPTION LIKE LOWER(?)",
+            return new AggregateOp("SELECT COUNT(*) FROM STUFF WHERE LOWER(DESCRIPTION) LIKE LOWER(?)",
                     ps -> ps.setString(1, searchQuery + "%")
             );
         }
