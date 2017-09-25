@@ -1,4 +1,6 @@
 # sane-dbc
+[![Build](https://travis-ci.org/novarto-oss/sane-dbc.svg?branch=master)](https://travis-ci.org/novarto-oss/sane-dbc)
+
 A sane approach to interacting with an RDBMS in Java
 
 - [Intro](#intro)
