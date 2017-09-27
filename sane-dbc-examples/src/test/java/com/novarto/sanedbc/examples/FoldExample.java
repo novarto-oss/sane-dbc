@@ -11,6 +11,7 @@ import fj.Hash;
 import fj.data.List;
 import fj.data.Option;
 import fj.data.hamt.HashArrayMappedTrie;
+import org.junit.After;
 import org.junit.Test;
 
 import java.sql.DriverManager;
@@ -24,12 +25,14 @@ import static org.junit.Assert.assertThat;
 public class FoldExample
 {
 
+    private final SyncDbInterpreter dbi = new SyncDbInterpreter(
+            () -> DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "")
+    );
+
     @Test
     public void testIt()
     {
-        SyncDbInterpreter dbi = new SyncDbInterpreter(
-                () -> DriverManager.getConnection("jdbc:hsqldb:mem:test", "sa", "")
-        );
+
         dbi.submit(new EffectOp("CREATE TABLE EMPLOYEES (ID INTEGER PRIMARY KEY, NAME VARCHAR(300), DEPARTMENT_ID INTEGER)"));
 
         dbi.submit(EmployeeDb.insert(asList(
@@ -84,5 +87,11 @@ public class FoldExample
 
         assertThat(new HashSet<>(result.find(3).some().toCollection()),
                 is(Collections.javaSet(new Employee(5, "Fike", 3))));
+    }
+
+    @After
+    public void teardown()
+    {
+        dbi.submit(new EffectOp("DROP TABLE EMPLOYEES"));
     }
 }
