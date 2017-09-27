@@ -21,6 +21,7 @@ import static com.novarto.sanedbc.core.ops.Binders.batchBinder;
  * @param <B>  Type of the result which must extends {@link Number}
  * @param <C1> The type of the optional (mutable) buffer which is intermediately used while constructing the result.
  * @param <C2> Type of the result
+ * @see Statement#getGeneratedKeys()
  */
 public abstract class BatchInsertGenKeysOp<A, B extends Number, C1 extends Iterable<B>, C2 extends Iterable<B>> extends DB<C2>
 

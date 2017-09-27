@@ -11,6 +11,7 @@ import java.sql.*;
  * may not support the retrieval of auto-generated key and this operation may fail with {@link SQLFeatureNotSupportedException}
  *
  * @param <A> the type of the result which must extends {@link Number}
+ * @see Statement#getGeneratedKeys()
  */
 
 public abstract class InsertGenKeysOp<A extends Number> extends DB<A>
