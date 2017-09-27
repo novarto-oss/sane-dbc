@@ -6,6 +6,14 @@ import fj.function.TryEffect1;
 
 import java.sql.*;
 
+/**
+ * Insert operation which returns the auto-generated key created for the inserted entry. Please consider that the used JDBC driver
+ * may not support the retrieval of auto-generated key and this operation may fail with {@link SQLFeatureNotSupportedException}
+ *
+ * @param <A> the type of the result which must extend {@link Number}
+ * @see Statement#getGeneratedKeys()
+ */
+
 public abstract class InsertGenKeysOp<A extends Number> extends DB<A>
 
 {
