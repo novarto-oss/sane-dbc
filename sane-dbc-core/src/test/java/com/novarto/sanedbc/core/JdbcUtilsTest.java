@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import static com.novarto.lang.CanBuildFrom.fjListCanBuildFrom;
 import static com.novarto.sanedbc.core.ops.Binders.NO_BINDER;
 import static com.novarto.sanedbc.core.ops.DbOps.sequence;
+import static com.novarto.sanedbc.core.ops.DbOps.unique;
 import static fj.P.p;
 import static fj.data.List.*;
 import static fj.data.Option.none;
@@ -40,7 +41,8 @@ public class JdbcUtilsTest
     private static final SyncDbInterpreter DB = new SyncDbInterpreter(
             () -> DriverManager.getConnection("jdbc:hsqldb:mem:JdbcUtilsTest", "sa", ""));
 
-    @BeforeClass public static void setupSuite()
+    @BeforeClass
+    public static void setupSuite()
     {
 
         fj.control.db.DB<Unit> createSchema = sequence(
@@ -98,7 +100,8 @@ public class JdbcUtilsTest
         return new UpdateOp("INSERT INTO MySqlTest_IDS(DUMMY) VALUES (?)", (stmt) -> stmt.setString(1, dummy));
     }
 
-    @After public void cleanup()
+    @After
+    public void cleanup()
     {
         DB.transact(new DB<Unit>()
         {
@@ -118,7 +121,8 @@ public class JdbcUtilsTest
         });
     }
 
-    @Test public void chainedTransaction()
+    @Test
+    public void chainedTransaction()
     {
 
         DB<List<String>> readInserted = insertKeysOp(asList("a", "b", "c")).bind(ids ->
@@ -132,7 +136,8 @@ public class JdbcUtilsTest
 
     }
 
-    @Test public void rollback()
+    @Test
+    public void rollback()
     {
 
         DB<List<Long>> insertDataFail = insertKeysOp(list("okidoki")).bind(ids -> fail("failed i have"));
@@ -147,7 +152,8 @@ public class JdbcUtilsTest
         assertEquals(0, (long) counts._2());
     }
 
-    @Test public void rollback2()
+    @Test
+    public void rollback2()
     {
 
         DB<Unit> failedInsert = insertKeysOp(list("ok"))
@@ -166,7 +172,8 @@ public class JdbcUtilsTest
         assertEquals(0, (long) counts._2());
     }
 
-    @Test public void selectBy()
+    @Test
+    public void selectBy()
     {
 
         DB<Unit> insertIt = insertKeysOp(list("a"))
@@ -178,7 +185,8 @@ public class JdbcUtilsTest
 
     }
 
-    @Test public void shouldDoInsertsAsUpdateOperations() throws ExecutionException, InterruptedException
+    @Test
+    public void shouldDoInsertsAsUpdateOperations() throws ExecutionException, InterruptedException
     {
 
         DB<List<String>> insertSelect = insertSingleChar("a").bind(rc1 -> insertSingleChar("b").bind(rc2 -> SELECT_ALL_IDS_OP));
@@ -188,7 +196,8 @@ public class JdbcUtilsTest
         assertEquals(list("a", "b"), result);
     }
 
-    @Test public void shouldSupportWhereSelects() throws ExecutionException, InterruptedException
+    @Test
+    public void shouldSupportWhereSelects() throws ExecutionException, InterruptedException
     {
 
         //CREATE TABLE MySqlTest_EXPIRING_STUFF (ID INTEGER PRIMARY KEY AUTO_INCREMENT, DESCRIPTION VARCHAR(100),STAMP BIGINT)"
@@ -207,7 +216,8 @@ public class JdbcUtilsTest
         assertEquals(list("a"), result);
     }
 
-    @Test public void foldLeft()
+    @Test
+    public void foldLeft()
     {
         FoldLeftSelectOp<Integer> fold = new FoldLeftSelectOp<>("SELECT * FROM MySqlTest_IDS", NO_BINDER,
                 (x, rs) -> x + rs.getInt(1), 0);
@@ -354,7 +364,8 @@ public class JdbcUtilsTest
         );
     }
 
-    @Test public void dbSequence()
+    @Test
+    public void dbSequence()
     {
         DB.transact(insertDataOp(arrayList(p(1, "foo"), p(2, "bar"), p(3, "zzz"))));
 
@@ -363,6 +374,20 @@ public class JdbcUtilsTest
 
         List<Option<String>> result = DB.submit(sequence(dbs, fjListCanBuildFrom()));
         assertThat(result, is(arrayList(some("foo"), some("zzz"), none())));
+    }
+
+    @Test
+    public void nextValFromSequence()
+    {
+        DB.submit(new EffectOp("CREATE SEQUENCE MY_SEQ START WITH 1 MINVALUE 1"));
+
+        final Option<Long> firstValFromSeqOp =
+                DB.submit(unique(new SelectOp.FjList<>("call NEXT VALUE FOR MY_SEQ", NO_BINDER, rs -> rs.getLong(1))));
+        assertThat(firstValFromSeqOp.some(), is(1L));
+
+        final Option<Long> secondsValFromSeqOp =
+                DB.submit(unique(new SelectOp.FjList<>("call NEXT VALUE FOR MY_SEQ", NO_BINDER, rs -> rs.getLong(1))));
+        assertThat(secondsValFromSeqOp.some(), is(2L));
     }
 
     private void swallowChecked(TryEffect0<?> f)
