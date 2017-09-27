@@ -2,7 +2,7 @@ dependencies {
     compile project (':sane-dbc-core')
     compile project (':sane-dbc-hikari')
     compile project (':sane-dbc-guava')
-
+    testCompile 'org.flywaydb:flyway-core:4.2.0'
 }
 
 afterEvaluate {
