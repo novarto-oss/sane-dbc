@@ -18,7 +18,7 @@ import static com.novarto.sanedbc.core.ops.Binders.batchBinder;
  * SQLFeatureNotSupportedException}
  *
  * @param <A>  Type of single entry to be inserted
- * @param <B>  Type of the result which must extends {@link Number}
+ * @param <B>  Type of the result which must extend {@link Number}
  * @param <C1> The type of the optional (mutable) buffer which is intermediately used while constructing the result.
  * @param <C2> Type of the result
  * @see Statement#getGeneratedKeys()
