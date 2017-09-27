@@ -12,6 +12,16 @@ import java.sql.*;
 
 import static com.novarto.sanedbc.core.ops.Binders.batchBinder;
 
+/**
+ * Batch insert operation which returns the auto-generated keys created for the inserted entries. Please consider that the used
+ * JDBC driver may not support the retrieval of auto-generated key and this operation may fail with {@link
+ * SQLFeatureNotSupportedException}
+ *
+ * @param <A>  Type of single entry to be inserted
+ * @param <B>  Type of the result which must extends {@link Number}
+ * @param <C1> The type of the optional (mutable) buffer which is intermediately used while constructing the result.
+ * @param <C2> Type of the result
+ */
 public abstract class BatchInsertGenKeysOp<A, B extends Number, C1 extends Iterable<B>, C2 extends Iterable<B>> extends DB<C2>
 
 {
@@ -21,8 +31,8 @@ public abstract class BatchInsertGenKeysOp<A, B extends Number, C1 extends Itera
     private final CanBuildFrom<B, C1, C2> cbf;
     private final Iterable<A> as;
 
-    public BatchInsertGenKeysOp(String sql, F<A, TryEffect1<PreparedStatement, SQLException>> binder,
-            Iterable<A> as, Try1<ResultSet, B, SQLException> getKey, CanBuildFrom<B, C1, C2> cbf)
+    public BatchInsertGenKeysOp(String sql, F<A, TryEffect1<PreparedStatement, SQLException>> binder, Iterable<A> as,
+            Try1<ResultSet, B, SQLException> getKey, CanBuildFrom<B, C1, C2> cbf)
     {
         this.sql = sql;
         this.binder = batchBinder(binder, as);
