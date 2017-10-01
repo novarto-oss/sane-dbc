@@ -34,6 +34,11 @@ If in doubt what the above means, act optimistically and send us a pull request,
 You need to set the system properties `PUBLISH_USER` and `PUBLISH_KEY` to a valid value in the console
 
 ### Snapshot publish
+
+Travis is set up to publish snapshots automatically, via the `maybePublish` gradle task. This happens if the version is snapshot, the branch is master, and the build is non-PR, i.e. it was triggerred because the master branch was pushed to.
+
+If you want to manually publish snapshots, this can be done via
+
 `./gradlew clean artifactoryPublish`
 
 ### Release publish
