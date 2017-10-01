@@ -22,6 +22,8 @@ If in doubt what the above means, act optimistically and send us a pull request,
 * `./gradlew clean check` - clean build / test
 * `./gradlew clean check -Dci` - to also run findbugs (slower, therefore hidden behind commandline option)
 
+Tests and findbugs are automatically run via [Travis](https://travis-ci.org/novarto-oss/sane-dbc).
+
 # Publishing
 
 ## To local repo
