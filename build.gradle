@@ -37,7 +37,7 @@ subprojects {
 
 
     javaconventions {
-        ci = System.getProperty("ci")!=null
+        ci = System.getProperty("ci")!=null || ("true".equals(System.getenv("TRAVIS")) && "true".equals(System.getenv("CI")))
     }
 
     dependencies {
@@ -47,5 +47,26 @@ subprojects {
         testCompile 'org.hsqldb:hsqldb:2.3.4'
     }
 
+    task maybePublish {
+
+        def isTravis = "true".equals(System.getenv("TRAVIS"))
+        def isSnapshot = version.toString().endsWith("SNAPSHOT")
+        def isNotPr = "false".equals(System.getenv("TRAVIS_PULL_REQUEST"))
+        def isMaster = "master".equals(System.getenv("TRAVIS_BRANCH"))
+
+        if(isTravis && isSnapshot && isNotPr && isMaster) {
+            println("Travis snapshot master non-pr build detected, will publish to artifactory")
+            finalizedBy(artifactoryPublish)
+        }
+
+        else {
+            doLast {
+                println("Not a Travis snapshot master non-pr build, skipping publish to artifactory")
+            }
+        }
+    }
+
 }
+
+
 
