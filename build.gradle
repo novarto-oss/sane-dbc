@@ -66,6 +66,8 @@ subprojects {
         }
     }
 
+    maybePublish.dependsOn("assemble")
+
 }
 
 
