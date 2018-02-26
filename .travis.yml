@@ -1,4 +1,7 @@
 language: java
 jdk:
   - oraclejdk8
-script: ./gradlew check maybePublish
+script:
+  - ./gradlew check
+  - ./gradlew assemble
+  - ./gradlew maybePublish
