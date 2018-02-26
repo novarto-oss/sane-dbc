@@ -1,5 +1,6 @@
 package com.novarto.sanedbc.core.interpreter;
 
+import fj.P1;
 import fj.Try;
 import fj.control.db.DB;
 import fj.data.Validation;
@@ -20,18 +21,18 @@ public class ValidationDbInterpreter
     }
 
 
-    public <A> Validation<Exception, A> submit(DB<A> db)
+    public <A> P1<Validation<Exception, A>> submit(DB<A> db)
     {
         return Try.<A, Exception>f(() -> {
             try (Connection c = ds.f())
             {
                 return db.run(c);
             }
-        }).f();
+        });
 
     }
 
-    public <A> Validation<Exception, A> transact(DB<A> db)
+    public <A> P1<Validation<Exception, A>> transact(DB<A> db)
     {
 
         return submit(transactional(db));

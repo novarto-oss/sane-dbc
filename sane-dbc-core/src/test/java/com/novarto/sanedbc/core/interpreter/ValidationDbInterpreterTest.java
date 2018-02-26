@@ -29,14 +29,14 @@ public class ValidationDbInterpreterTest
 
     @BeforeClass public static void setupSuite()
     {
-        DB.transact(new EffectOp("CREATE TABLE BAR (BAZ VARCHAR(100))"));
+        DB.transact(new EffectOp("CREATE TABLE BAR (BAZ VARCHAR(100))")).f();
     }
 
     @Test public void testIt()
     {
-        assertThat(DB.submit(insert("x")), is(success(1)));
+        assertThat(DB.submit(insert("x")).f(), is(success(1)));
 
-        assertThat(DB.submit(selectAll()), is(success(single("x"))));
+        assertThat(DB.submit(selectAll()).f(), is(success(single("x"))));
 
         SQLException ex = new SQLException("failed i have");
         assertThat(
@@ -48,27 +48,27 @@ public class ValidationDbInterpreterTest
                         insert("b").run(c);
                         throw ex;
                     }
-                }),
+                }).f(),
                 is(fail(ex))
         );
 
-        assertThat(DB.submit(selectAll()), is(success(single("x"))));
+        assertThat(DB.submit(selectAll()).f(), is(success(single("x"))));
 
         SQLException noConn = new SQLException("no connection");
         ValidationDbInterpreter noConnection = new ValidationDbInterpreter(() -> {
             throw noConn;
         });
 
-        assertThat(noConnection.transact(insert("alabala")), is(fail(noConn)));
+        assertThat(noConnection.transact(insert("alabala")).f(), is(fail(noConn)));
 
-        assertThat(DB.submit(selectAll()), is(success(single("x"))));
+        assertThat(DB.submit(selectAll()).f(), is(success(single("x"))));
 
         assertThat(
-                DB.transact(insert("y").bind(ignore -> insert("z")).map(ignore2 -> Unit.unit())),
+                DB.transact(insert("y").bind(ignore -> insert("z")).map(ignore2 -> Unit.unit())).f(),
                 is(success(Unit.unit()))
         );
 
-        assertThat(DB.submit(selectAll()), is(success(arrayList("x", "y", "z"))));
+        assertThat(DB.submit(selectAll()).f(), is(success(arrayList("x", "y", "z"))));
 
     }
 

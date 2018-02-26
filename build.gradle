@@ -1,5 +1,5 @@
 group 'com.novarto'
-version '0.9-SNAPSHOT'
+version '0.9.1-SNAPSHOT'
 
 repositories {
     mavenCentral()

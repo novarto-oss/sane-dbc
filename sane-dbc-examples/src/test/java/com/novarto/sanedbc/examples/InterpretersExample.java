@@ -80,7 +80,7 @@ public class InterpretersExample
         //we can reuse the same data source across multiple interpreters
         ValidationDbInterpreter vdb = new ValidationDbInterpreter(lift(hikariDS));
 
-        Validation<Exception, Long> successExpected = vdb.submit(new AggregateOp("SELECT COUNT(*) FROM DUMMY"));
+        Validation<Exception, Long> successExpected = vdb.submit(new AggregateOp("SELECT COUNT(*) FROM DUMMY")).f();
         assertThat(successExpected.isSuccess(), is(true));
         assertThat(successExpected.success(), is(1L));
 
@@ -92,7 +92,7 @@ public class InterpretersExample
                 // all subclasses of java.lang.Exception and lifted to Validation, not just SqlException
                 throw rte;
             }
-        });
+        }).f();
 
         assertThat(failExpected.isFail(), is(true));
         assertThat(failExpected.fail(), is(rte));

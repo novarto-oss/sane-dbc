@@ -56,26 +56,25 @@ repositories {
 dependencies {
 
     // the sane-dbc library
-    compile('com.novarto:sane-dbc-core:0.9-SNAPSHOT') {
+    compile('com.novarto:sane-dbc-core:0.9.1-SNAPSHOT') {
         changing = true
     }
     
     
     // HikariCP support
-    compile('com.novarto:sane-dbc-hikari:0.9-SNAPSHOT') {
+    compile('com.novarto:sane-dbc-hikari:0.9.1-SNAPSHOT') {
         changing = true
     }
     
     // The core library provides support for asynchronous interpretation through AsyncDbInterpeter, which returns CompletableFuture
     // If in addition you require support for Guava ListenableFuture, use this jar:
-    compile('com.novarto:sane-dbc-guava:0.9-SNAPSHOT') {
+    compile('com.novarto:sane-dbc-guava:0.9.1-SNAPSHOT') {
         changing = true
     }
 }
 ```
 You can refer to `sane-dbc` in Maven and other tools equivalently.
 
-Release versions will be published once there is interest in the library.
 
 # Tutorial
 

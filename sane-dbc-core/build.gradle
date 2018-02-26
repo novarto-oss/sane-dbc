@@ -1,5 +1,5 @@
 dependencies {
-    compile('com.novarto:lang:0.9-SNAPSHOT') {
+    compile('com.novarto:lang:0.9.1-SNAPSHOT') {
         changing = true
     }
     compile 'org.slf4j:slf4j-api:1.7.25'
