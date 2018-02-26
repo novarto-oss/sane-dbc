@@ -1,4 +1,4 @@
 language: java
 jdk:
   - oraclejdk8
-script: ./gradlew clean check maybePublish
+script: ./gradlew check maybePublish
